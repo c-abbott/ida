@@ -39,15 +39,13 @@ Sigma = matrix(
     nrow=3, ncol=3, byrow=TRUE)
 
 # Sample from multivariate Gaussian.
-Y <- mvrnorm(n, mu=c(mu1, mu2, mu3), Sigma=Sigma)
+Y <- mvrnorm(n=n, mu=c(mu1, mu2, mu3), Sigma=Sigma)
 
 # Look at first 10 rows of dataset.
 Y[1:10,]
 
 # Storing and rounding the simulated values in three variables
-Y1 <- round(Y[,1]); Y2 <- round(Y[,2]); Y3 <- round(Y[,3])
-mean(Y1); mean(Y2); mean(Y3); sd(Y1); sd(Y2); sd(Y3)
-
+Y1 <- Y[,1]; Y2 <- Y[,2]; Y3 <- Y[,3]
 ```
 ## Exercise 3a
 We now wish to impose the MCAR missing data mechanism on the data by considering
@@ -55,11 +53,11 @@ $Pr(R=0|Y1,Y2,Y3, \beta) = 0.65$ and then observe the densitites of the complete
 $Y2$ values, the observed $Y2$ values (after imposing MCAR) and the missing
 $Y2$ values. We note that $R$ is a binary value and hence can be simulated using
 a binomal distribution with the probability parameter set to 0.65.
-```{r, MCAR, include = TRUE, tidy = TRUE}
-theta <- 0.65
+```{r, MCAR, include = TRUE, message=FALSE, tidy = TRUE}
+theta <- 0.35
 r_mcar <- rbinom(n, size=1, prob=theta)
 # Indices of observed variables
-ind_mcar_obs <- which(r_mcar==1)
+ind_mcar_obs <- which(r_mcar == 1)
 # Extract missing and observed values from Y2
 Y2_mcar_obs <- Y2[ind_mcar_obs]
 Y2_mcar_mis <- Y2[-ind_mcar_obs]
@@ -87,3 +85,53 @@ Y2boxmcar <- c(Y2, Y2_mcar_obs,Y2_mcar_mis)
 boxplot(Y2boxmcar ~ index1, boxwex = 0.25, col = "red", cex.lab = 0.8, 
         cex.axis = 1.2, ylab = expression(Y[2]), xlab ="MCAR")
 ```
+
+## Exercise 3b
+
+We repeat the above procedure for exercise 3b, however, this time we impose the MAR
+missing data mechanism by considering the following:
+$Pr(R=0|Y_1, Y_2, Y_3,\beta) = \frac{e^{\beta_0 + \beta_1Y_3}}{1 + e^{\beta_0 + \beta_1Y_3}}$.
+
+Note that for the prob argument of the rbinom function we use the compliment of the model 
+listed previously. This is because $R=1$ indicates an observed value meanwhile
+$R=0$ indicates a missing value.
+
+```{r, MAR, include = TRUE, tidy = TRUE}
+beta0 <- 1.5; beta1 <- 3;
+r_mar <- rbinom(n, size=1, prob=1/(1+exp(beta0+beta1*Y3)))
+ind_mar_obs <- which(r_mar==1)
+Y2_mar_obs <- Y2[ind_mar_obs]
+Y2_mar_mis <- Y2[-ind_mar_obs]
+# Plotting.
+plot(density(Y2), lwd = 2, col = "blue", xlab = expression(Y[2]), main = "MAR", ylim = c(0, 0.8))
+lines(density(Y2_mar_obs), lwd = 2, col = "red")
+lines(density(Y2_mar_mis), lwd = 2, col = "darkgreen")
+legend(1.2, 0.4, legend = c("Complete data", "Observed data", "Missing data"), 
+       col = c("blue", "red", "darkgreen"), lty = c(1,1,1), lwd = c(2,2,2), bty ="n")
+```
+We now observe that the distributions for each condition are starting to diverge.
+We expect this due to the face that our missing data mechansism is only
+dependent on variables that have been fully observed which suggest that the 
+missing data will be MAR.
+
+## Exercise 3c
+Finally, we consider the MNAR case where our missing data mechnism takes
+the following form: $Pr(R=0|Y_1, Y_2, Y_3,\beta) = \frac{e^{\beta_0 + \beta_1Y_1 + \beta_2Y_2}}{1 + e^{\beta_0 + \beta_1Y_1 + \beta_2Y_2}}$.
+
+```{r, MNAR, include = TRUE, tidy = TRUE}
+beta0 <- 1.5; beta1 <- 3; beta2 = 5;
+r_mnar <- rbinom(n, size=1, prob=1/(1+exp(beta0+beta1*Y1+beta2*Y2)))
+ind_mnar_obs <- which(r_mnar==1)
+Y2_mnar_obs <- Y2[ind_mnar_obs]
+Y2_mnar_mis <- Y2[-ind_mnar_obs]
+# Plotting.
+plot(density(Y2), lwd = 2, col = "blue", xlab = expression(Y[2]), main = "MNAR", ylim = c(0, 0.8))
+lines(density(Y2_mnar_obs), lwd = 2, col = "red")
+lines(density(Y2_mnar_mis), lwd = 2, col = "darkgreen")
+legend(1.2, 0.4, legend = c("Complete data", "Observed data", "Missing data"), 
+       col = c("blue", "red", "darkgreen"), lty = c(1,1,1), lwd = c(2,2,2), bty ="n")
+```
+And as expected, we see the greatest disparity between the 3 distributions 
+for the MNAR situation.
+
+

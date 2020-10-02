@@ -1,0 +1,89 @@
+---
+title: "Workshop 1"
+author: "Callum Abbott"
+date: "02/10/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Problem 3
+In this exercise we will simulate data and investigate the impact of different 
+mechanisms of missingness. 
+
+Consider $Y = (Y1, Y2, Y3)$, to be simulated from a standard trivariate normal
+distribution with correlations $\rho_{1,2}$, $\rho_{1,3}$ and $\rho_{2,3}$ all
+equal to 0.5.
+
+Missingness will then be imposed on $Y2$, while $Y1$ and $Y3$ remain fully 
+observed. Additionally, let $R$ be the missingness indicator, taking the value 1 
+for observed values and 0 for missing values. In the following consider $n = 500$.
+```{r, sampling, include = TRUE, message = FALSE, tidy = TRUE}
+set.seed(42)
+require(MASS)
+
+# Set parameters given by question.
+n <- 500;
+mu1 <- mu2 <- mu3 <- 0;
+sigma1 <- sigma2 <- sigma3 <- 1;
+rho <- 0.5
+
+# Form the covariance matrix
+Sigma = matrix(
+  c(sigma1^2, rho*sigma1*sigma2, rho*sigma1*sigma3, 
+    rho*sigma2*sigma1, sigma2^2, rho*sigma2*sigma3, 
+    rho*sigma3*sigma1, rho*sigma3*sigma2, sigma3^2), 
+    nrow=3, ncol=3, byrow=TRUE)
+
+# Sample from multivariate Gaussian.
+Y <- mvrnorm(n, mu=c(mu1, mu2, mu3), Sigma=Sigma)
+
+# Look at first 10 rows of dataset.
+Y[1:10,]
+
+# Storing and rounding the simulated values in three variables
+Y1 <- round(Y[,1]); Y2 <- round(Y[,2]); Y3 <- round(Y[,3])
+mean(Y1); mean(Y2); mean(Y3); sd(Y1); sd(Y2); sd(Y3)
+
+```
+## Exercise 3a
+We now wish to impose the MCAR missing data mechanism on the data by considering
+$Pr(R=0|Y1,Y2,Y3, \beta) = 0.65$ and then observe the densitites of the complete
+$Y2$ values, the observed $Y2$ values (after imposing MCAR) and the missing
+$Y2$ values. We note that $R$ is a binary value and hence can be simulated using
+a binomal distribution with the probability parameter set to 0.65.
+```{r, MCAR, include = TRUE, tidy = TRUE}
+theta <- 0.65
+r_mcar <- rbinom(n, size=1, prob=theta)
+# Indices of observed variables
+ind_mcar_obs <- which(r_mcar==1)
+# Extract missing and observed values from Y2
+Y2_mcar_obs <- Y2[ind_mcar_obs]
+Y2_mcar_mis <- Y2[-ind_mcar_obs]
+# Plotting.
+plot(density(Y2), lwd = 2, col = "blue", xlab = expression(Y[2]), main = "MCAR", ylim = c(0, 0.6))
+lines(density(Y2_mcar_obs), lwd = 2, col = "red")
+lines(density(Y2_mcar_mis), lwd = 2, col = "darkgreen")
+legend(1.2, 0.4, legend = c("Complete data", "Observed data", "Missing data"), 
+       col = c("blue", "red", "darkgreen"), lty = c(1,1,1), lwd = c(2,2,2), bty ="n")
+```
+We see that the distributions of complete, observed and missing data are all very similar;
+a trademark indicator that the data is MCAR.
+
+We can visualise this another way using boxplots for which we also expect to see
+similar distributions.
+```{r, mcar_box, include=TRUE, tidy=TRUE}
+# Get number of observed and missing variables.
+n_obs <- length(Y2_mcar_obs)
+n_mis <- length(Y2_mcar_mis)
+index <- rep("Y2_comp", n + n_obs + n_mis)
+index[(n+1):(n+n_obs)] <- "Y2_obs"
+index[(n+n_obs+1):(n+n_obs+n_mis)] <- "Y2_mis"
+index1 <- factor(index, levels = c("Y2_comp","Y2_obs","Y2_mis"))
+Y2boxmcar <- c(Y2, Y2_mcar_obs,Y2_mcar_mis)
+boxplot(Y2boxmcar ~ index1, boxwex = 0.25, col = "red", cex.lab = 0.8, 
+        cex.axis = 1.2, ylab = expression(Y[2]), xlab ="MCAR")
+```

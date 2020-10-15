@@ -1,0 +1,697 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\hypersetup{
+  pdftitle={Week 3 Exercises},
+  pdfauthor={Callum Abbott},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+\urlstyle{same} % disable monospaced font for URLs
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{-\maxdimen} % remove section numbering
+
+\title{Week 3 Exercises}
+\author{Callum Abbott}
+\date{15/10/2020}
+
+\begin{document}
+\maketitle
+
+\hypertarget{a.}{%
+\subsubsection{2a.}\label{a.}}
+
+\hypertarget{carry-out-a-complete-case-analysis-to-find-the-mean-value-of-systolic-blood-pressure}{%
+\paragraph{Carry out a complete case analysis to find the mean value of
+systolic blood
+pressure}\label{carry-out-a-complete-case-analysis-to-find-the-mean-value-of-systolic-blood-pressure}}
+
+\hypertarget{overall-and-by-gender.-also-compute-the-associated-standard-error-of-the-mean.}{%
+\paragraph{overall, and by gender. Also compute the associated standard
+error of the
+mean.}\label{overall-and-by-gender.-also-compute-the-associated-standard-error-of-the-mean.}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Load in data}
+\KeywordTok{load}\NormalTok{(}\StringTok{"datasbp.Rdata"}\NormalTok{)}
+\CommentTok{\# CCA Overall}
+\NormalTok{overall\_sbp =}\StringTok{ }\KeywordTok{mean}\NormalTok{(datasbp[, }\DecValTok{4}\NormalTok{], }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{overall\_error =}\StringTok{ }\KeywordTok{sd}\NormalTok{(datasbp[, }\DecValTok{4}\NormalTok{], }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{) }\OperatorTok{/}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{length}\NormalTok{(datasbp[, }\DecValTok{4}\NormalTok{]))}
+\CommentTok{\# CCA Male}
+\NormalTok{male\_sbp =}\StringTok{ }\KeywordTok{mean}\NormalTok{(datasbp[}\DecValTok{12}\NormalTok{, }\DecValTok{4}\NormalTok{], }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{male\_error =}\StringTok{ }\KeywordTok{sd}\NormalTok{(datasbp[}\DecValTok{12}\NormalTok{, }\DecValTok{4}\NormalTok{], }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{) }\OperatorTok{/}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{length}\NormalTok{(datasbp[}\DecValTok{12}\NormalTok{, }\DecValTok{4}\NormalTok{]))}
+\CommentTok{\# CCA Female}
+\NormalTok{female\_sbp =}\StringTok{ }\KeywordTok{mean}\NormalTok{(datasbp[}\DecValTok{13}\OperatorTok{:}\DecValTok{20}\NormalTok{, }\DecValTok{4}\NormalTok{], }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{female\_error =}\StringTok{ }\KeywordTok{sd}\NormalTok{(datasbp[}\DecValTok{13}\OperatorTok{:}\DecValTok{20}\NormalTok{, }\DecValTok{4}\NormalTok{], }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{) }\OperatorTok{/}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{length}\NormalTok{(datasbp[}\DecValTok{13}\OperatorTok{:}\DecValTok{20}\NormalTok{, }\DecValTok{4}\NormalTok{]))}
+
+\CommentTok{\# Vanda\textquotesingle{}s Method}
+\NormalTok{ind =}\StringTok{ }\KeywordTok{which}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{FALSE}\NormalTok{)}
+\NormalTok{mccoverall =}\StringTok{ }\KeywordTok{mean}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP[ind])}
+\NormalTok{seccoverall =}\StringTok{ }\KeywordTok{sd}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP[ind]) }\OperatorTok{/}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{length}\NormalTok{(ind))}
+\NormalTok{mccoverall; seccoverall}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 146.525
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 5.529613
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{indf =}\StringTok{ }\KeywordTok{which}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{FALSE} \OperatorTok{\&}\StringTok{ }\NormalTok{datasbp}\OperatorTok{$}\NormalTok{Sex }\OperatorTok{==}\StringTok{ "Female"}\NormalTok{)}
+\NormalTok{mccf =}\StringTok{ }\KeywordTok{mean}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP[indf])}
+\NormalTok{seccf =}\StringTok{ }\KeywordTok{sd}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP[indf]) }\OperatorTok{/}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{length}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP[indf]))}
+\NormalTok{mccf; seccf}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 124.46
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 6.09759
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{indm =}\StringTok{ }\KeywordTok{which}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{FALSE} \OperatorTok{\&}\StringTok{ }\NormalTok{datasbp}\OperatorTok{$}\NormalTok{Sex }\OperatorTok{==}\StringTok{ "Male"}\NormalTok{)}
+\NormalTok{mccm =}\StringTok{ }\KeywordTok{mean}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP[indm])}
+\NormalTok{seccm =}\StringTok{ }\KeywordTok{sd}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP[indm]) }\OperatorTok{/}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{length}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP[indm]))}
+\NormalTok{mccm; seccm}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 156.5545
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 5.269076
+\end{verbatim}
+
+The standard error I computed were wrong since the NAs were included in
+the sample size, further reducing the standard error of our estimates
+more than CCA already does!
+
+\hypertarget{b.}{%
+\subsubsection{2b.}\label{b.}}
+
+\hypertarget{impute-the-missing-values-of-systolic-blood-pressure-by-mean-imputation.-use-these}{%
+\paragraph{Impute the missing values of systolic blood pressure by mean
+imputation. Use
+these}\label{impute-the-missing-values-of-systolic-blood-pressure-by-mean-imputation.-use-these}}
+
+\hypertarget{filled-in-values-to-estimate-the-mean-systolic-blood-pressure-with-the-corresponding}{%
+\paragraph{filled in values to estimate the mean systolic blood pressure
+with the
+corresponding}\label{filled-in-values-to-estimate-the-mean-systolic-blood-pressure-with-the-corresponding}}
+
+\hypertarget{standard-error.}{%
+\paragraph{standard error.}\label{standard-error.}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Finding NAs in dataset}
+\NormalTok{na\_inds =}\StringTok{ }\KeywordTok{which}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{TRUE}\NormalTok{)}
+\CommentTok{\# Mean imputation}
+\NormalTok{datasbp}\OperatorTok{$}\NormalTok{SBP[na\_inds] =}\StringTok{ }\NormalTok{mccoverall}
+\CommentTok{\# Mean and SD after imputation}
+\NormalTok{mimp\_mean =}\StringTok{ }\KeywordTok{mean}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP)}
+\NormalTok{mimp\_err =}\StringTok{ }\KeywordTok{sd}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{/}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(}\KeywordTok{length}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP))}
+\NormalTok{mimp\_mean; mimp\_err}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 146.525
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 4.394491
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Vanda\textquotesingle{}s Method}
+\NormalTok{sbpmi =}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{TRUE}\NormalTok{, }\KeywordTok{mean}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP, }\DataTypeTok{na.rm =} \OtherTok{TRUE}\NormalTok{), datasbp}\OperatorTok{$}\NormalTok{SBP)}
+\NormalTok{n =}\StringTok{ }\KeywordTok{length}\NormalTok{(sbpmi)}
+\NormalTok{mmi =}\StringTok{ }\KeywordTok{mean}\NormalTok{(sbpmi)}
+\NormalTok{semi =}\StringTok{ }\KeywordTok{sd}\NormalTok{(sbpmi)}\OperatorTok{/}\KeywordTok{sqrt}\NormalTok{(n)}
+\NormalTok{mmi; semi}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 146.525
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 4.394491
+\end{verbatim}
+
+\hypertarget{c.}{%
+\subsubsection{2c.}\label{c.}}
+
+\hypertarget{impute-the-missing-values-for-systolic-blood-pressure-by-regression-imputation-regressing-on-gender-and-age.}{%
+\paragraph{Impute the missing values for systolic blood pressure by
+regression imputation, regressing on gender and
+age.}\label{impute-the-missing-values-for-systolic-blood-pressure-by-regression-imputation-regressing-on-gender-and-age.}}
+
+\hypertarget{write-down-the-regression-equation-used-and-the-four-imputed-values-obtained.-use-these-to-estimate-the-mean-systolic-blood-pressure-and-the-associated-standard-error.}{%
+\paragraph{Write down the regression equation used and the four imputed
+values obtained. Use these to estimate the mean systolic blood pressure
+and the associated standard
+error.}\label{write-down-the-regression-equation-used-and-the-four-imputed-values-obtained.-use-these-to-estimate-the-mean-systolic-blood-pressure-and-the-associated-standard-error.}}
+
+We will now use regression imputation, conditioning on sex and age, to
+impute the missing SBP values and consequently compute its mean and
+associated standard error. The regression model used is as follows
+\begin{equation*}
+\text{SBP}=\beta_{0}+\beta_{1}\text{Age}+\beta_{2}\text{Sex}+\varepsilon,\qquad \varepsilon\sim{N}(0,\sigma^2).
+\end{equation*} Here, gender is a dummy (binary) variable taking the
+value \(0\) if the subject is female (reference category) and \(1\) if
+the subject is male. This is in accordance with what \texttt{R} does. To
+check whether the variable is coded as a factor we do the following.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# Checking discrete vars are encoded as factors}
+\KeywordTok{is.factor}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{Sex)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] TRUE
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{levels}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{Sex)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] "Female" "Male"
+\end{verbatim}
+
+Factors in \texttt{R} are ordered alphabetically, and so female is
+chosen as the reference category.
+
+The expected values for SBP are then \begin{equation*}
+E(\text{SBP})=\begin{cases}
+\beta_0+\beta_1\text{Age} & \mbox{ if the subject is female,}\\
+(\beta_0+\beta_2)+\beta_1\text{Age} & \mbox{ if the subject is male.}
+\end{cases}
+\end{equation*}
+
+We fit the regression model to the complete cases, obtain estimated
+regression coefficients \(\widehat{\beta}_0\), \(\widehat{\beta}_1\),
+and \(\widehat{\beta}_2\), and then we impute the SBP values based on
+the regression equation. The estimated regression coefficients are
+\(\widehat{\beta}_0=40.8784\), \(\widehat{\beta}_1=1.6518\), and
+\(\widehat{\beta}_2=29.6318\). The imputed values (rounded to two
+decimal places) are then
+
+\begin{center}
+\begin{tabular}{cccc}
+Subject number & Sex & Age & Imputed SBP\\ \hline
+6 & Male & 45 & 144.84\\
+13 & female & 57 & 135.03\\
+15 & female & 56 & 133.38\\
+17 & Female & 48 & 120.17
+\end{tabular}
+\end{center}
+
+We can easily fit such model in \texttt{R}.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{load}\NormalTok{(}\StringTok{"datasbp.Rdata"}\NormalTok{)}
+\NormalTok{fitsbp =}\StringTok{ }\KeywordTok{lm}\NormalTok{(SBP }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{Age }\OperatorTok{+}\StringTok{ }\NormalTok{Sex, }\DataTypeTok{data =}\NormalTok{ datasbp)}
+\KeywordTok{summary}\NormalTok{(fitsbp)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## lm(formula = SBP ~ Age + Sex, data = datasbp)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -18.869  -5.987  -2.856   4.915  27.042 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)   
+## (Intercept)  40.8784    29.5433   1.384  0.18976   
+## Age           1.6518     0.5718   2.889  0.01268 * 
+## SexMale      29.6318     7.2447   4.090  0.00128 **
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 13.34 on 13 degrees of freedom
+##   (4 observations deleted due to missingness)
+## Multiple R-squared:  0.6848, Adjusted R-squared:  0.6363 
+## F-statistic: 14.12 on 2 and 13 DF,  p-value: 0.0005504
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#Two different ways of extracting the regression coefficients.}
+\NormalTok{fitsbp}\OperatorTok{$}\NormalTok{coefficients}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## (Intercept)         Age     SexMale 
+##   40.878357    1.651811   29.631845
+\end{verbatim}
+
+To automatically compute the predicted values, we use the function
+\texttt{predict}. We just need to pass to this function our fitted
+regression model, \texttt{fitsbp}, and the new values to predict. In
+this case, for the sake of simplicity, we have passed the entire data
+set, but we are, obviously, only interested in predicting the
+\texttt{NA} values and so all the other values in such variable should
+be ignored (as they correspond to predictions for values that we
+actually observe).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{predri =}\StringTok{ }\KeywordTok{predict}\NormalTok{(fitsbp, }\DataTypeTok{newdata =}\NormalTok{ datasbp)}
+\NormalTok{predri[}\DecValTok{6}\NormalTok{]; predri[}\DecValTok{13}\NormalTok{]; predri[}\DecValTok{15}\NormalTok{]; predri[}\DecValTok{17}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        6 
+## 144.8417
+\end{verbatim}
+
+\begin{verbatim}
+##       13 
+## 135.0316
+\end{verbatim}
+
+\begin{verbatim}
+##       15 
+## 133.3798
+\end{verbatim}
+
+\begin{verbatim}
+##       17 
+## 120.1653
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sbpri =}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{TRUE}\NormalTok{, predri, datasbp}\OperatorTok{$}\NormalTok{SBP)}
+
+\NormalTok{mri =}\StringTok{ }\KeywordTok{mean}\NormalTok{(sbpri)}
+\NormalTok{seri =}\StringTok{ }\KeywordTok{sd}\NormalTok{(sbpri) }\OperatorTok{/}\StringTok{ }\KeywordTok{sqrt}\NormalTok{(n)}
+\NormalTok{mri; seri}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 143.8909
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 4.645933
+\end{verbatim}
+
+We should examine whether the linearity assumption is roughly met. We
+can informally check it using a plot of the fitted values against the
+residuals. If the assumption is met, no pattern should be visible.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot}\NormalTok{(fitsbp}\OperatorTok{$}\NormalTok{fitted.values, }\KeywordTok{residuals}\NormalTok{(fitsbp), }\DataTypeTok{xlab =} \StringTok{"Fitted values"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Residuals"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{w3-exercises_files/figure-latex/unnamed-chunk-2-1.pdf}
+
+There is no obvious pattern, so there is no reason to suspect of a
+nonlinear relationship or of no constant variance. Although it is not of
+fundamental importance here in regression imputation, we can also check
+the assumption of normality of error terms using a QQ-plot.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{qqnorm}\NormalTok{(}\KeywordTok{rstandard}\NormalTok{(fitsbp), }\DataTypeTok{xlim =} \KeywordTok{c}\NormalTok{(}\OperatorTok{{-}}\DecValTok{3}\NormalTok{, }\DecValTok{3}\NormalTok{), }\DataTypeTok{ylim =} \KeywordTok{c}\NormalTok{(}\OperatorTok{{-}}\DecValTok{3}\NormalTok{, }\DecValTok{3}\NormalTok{))}
+\KeywordTok{qqline}\NormalTok{(}\KeywordTok{rstandard}\NormalTok{(fitsbp), }\DataTypeTok{col =} \DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{w3-exercises_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+\hypertarget{d.}{%
+\subsubsection{2d.}\label{d.}}
+
+\hypertarget{the-same-as-in-c-but-now-using-stochastic-regression-imputation.}{%
+\paragraph{The same as in (c) but now using stochastic regression
+imputation.}\label{the-same-as-in-c-but-now-using-stochastic-regression-imputation.}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{set.seed}\NormalTok{(}\DecValTok{1}\NormalTok{)}
+\NormalTok{predsri \textless{}{-}}\StringTok{ }\KeywordTok{predict}\NormalTok{(fitsbp, }\DataTypeTok{newdata =}\NormalTok{ datasbp) }\OperatorTok{+}\StringTok{ }\KeywordTok{rnorm}\NormalTok{(n, }\DecValTok{0}\NormalTok{, }\KeywordTok{sigma}\NormalTok{(fitsbp))}
+\NormalTok{predsri[}\DecValTok{6}\NormalTok{]; predsri[}\DecValTok{13}\NormalTok{]; predsri[}\DecValTok{15}\NormalTok{]; predsri[}\DecValTok{17}\NormalTok{]}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##        6 
+## 133.8977
+\end{verbatim}
+
+\begin{verbatim}
+##       13 
+## 126.7451
+\end{verbatim}
+
+\begin{verbatim}
+##       15 
+## 148.3849
+\end{verbatim}
+
+\begin{verbatim}
+##       17 
+## 119.9493
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{sbpsri \textless{}{-}}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{TRUE}\NormalTok{, predsri, datasbp}\OperatorTok{$}\NormalTok{SBP)  }
+
+\NormalTok{msri \textless{}{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(sbpsri)}
+\NormalTok{sesri \textless{}{-}}\StringTok{ }\KeywordTok{sd}\NormalTok{(sbpsri)}\OperatorTok{/}\KeywordTok{sqrt}\NormalTok{(n)}
+\NormalTok{msri; sesri}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 143.6689
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 4.711592
+\end{verbatim}
+
+\hypertarget{e.}{%
+\subsubsection{2e.}\label{e.}}
+
+\hypertarget{suppose-that-hot-deck-imputation-is-to-be-used-with-strata-defined-by-gender-and-age-50-years-and-50-years.-estimate-the-mean-systolic-blood-pressure-with-the-associated-standard-error.}{%
+\paragraph{Suppose that hot deck imputation is to be used with strata
+defined by gender and age (≤ 50 years and \textgreater{} 50 years).
+Estimate the mean systolic blood pressure with the associated standard
+error.}\label{suppose-that-hot-deck-imputation-is-to-be-used-with-strata-defined-by-gender-and-age-50-years-and-50-years.-estimate-the-mean-systolic-blood-pressure-with-the-associated-standard-error.}}
+
+Finally, we apply the hot deck imputation method. We are told to define
+the strata based on gender and age (younger or 50 years old and older
+than 50 years old). For instance, we see that subject number 6 is male
+and is 45 years old. Thus, possible candidates to give him his SBP value
+are subjects number 1, 2, 7, and 8. We now just need to pick one of
+these subjects in a random fashion. The estimated mean SBP is \(142.40\)
+(\(4.809\)).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{indhdm1 \textless{}{-}}\StringTok{ }\KeywordTok{which}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{FALSE} \OperatorTok{\&}\StringTok{ }\NormalTok{datasbp}\OperatorTok{$}\NormalTok{Sex }\OperatorTok{==}\StringTok{ "Male"} \OperatorTok{\&}\StringTok{ }\NormalTok{datasbp}\OperatorTok{$}\NormalTok{Age }\OperatorTok{\textless{}=}\StringTok{ }\DecValTok{50}\NormalTok{)}
+\NormalTok{indhdm1}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 1 2 7 8
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{donor6 \textless{}{-}}\StringTok{ }\KeywordTok{sample}\NormalTok{(indhdm1, }\DecValTok{1}\NormalTok{, }\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{donor6}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 2
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{indhdf1 \textless{}{-}}\StringTok{ }\KeywordTok{which}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{FALSE} \OperatorTok{\&}\StringTok{ }\NormalTok{datasbp}\OperatorTok{$}\NormalTok{Sex }\OperatorTok{==}\StringTok{ "Female"} \OperatorTok{\&}\StringTok{ }\NormalTok{datasbp}\OperatorTok{$}\NormalTok{Age }\OperatorTok{\textless{}=}\StringTok{ }\DecValTok{50}\NormalTok{)}
+\NormalTok{indhdf1}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 14 16 18
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{donor17 \textless{}{-}}\StringTok{ }\KeywordTok{sample}\NormalTok{(indhdf1, }\DecValTok{1}\NormalTok{, }\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{donor17}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 16
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{indhdf2 \textless{}{-}}\StringTok{ }\KeywordTok{which}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{FALSE} \OperatorTok{\&}\StringTok{ }\NormalTok{datasbp}\OperatorTok{$}\NormalTok{Sex }\OperatorTok{==}\StringTok{ "Female"} \OperatorTok{\&}\StringTok{ }\NormalTok{datasbp}\OperatorTok{$}\NormalTok{Age }\OperatorTok{\textgreater{}}\StringTok{ }\DecValTok{50}\NormalTok{)}
+\NormalTok{indhdf2}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 19 20
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{donor13 \textless{}{-}}\StringTok{ }\KeywordTok{sample}\NormalTok{(indhdf2, }\DecValTok{1}\NormalTok{, }\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{donor15 \textless{}{-}}\StringTok{ }\KeywordTok{sample}\NormalTok{(indhdf2, }\DecValTok{1}\NormalTok{, }\DataTypeTok{replace =} \OtherTok{TRUE}\NormalTok{)}
+\NormalTok{donor13; donor15}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 19
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 20
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#creating a new sbp variable with imputed values from the hot deck procedure}
+\NormalTok{sbphd \textless{}{-}}\StringTok{ }\KeywordTok{c}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP[}\KeywordTok{is.na}\NormalTok{(datasbp}\OperatorTok{$}\NormalTok{SBP) }\OperatorTok{==}\StringTok{ }\OtherTok{FALSE}\NormalTok{],datasbp}\OperatorTok{$}\NormalTok{SBP[donor6],datasbp}\OperatorTok{$}\NormalTok{SBP[donor17],}
+\NormalTok{        datasbp}\OperatorTok{$}\NormalTok{SBP[donor13],datasbp}\OperatorTok{$}\NormalTok{SBP[donor15]) }
+\NormalTok{mhd \textless{}{-}}\StringTok{ }\KeywordTok{mean}\NormalTok{(sbphd); sehd \textless{}{-}}\StringTok{ }\KeywordTok{sd}\NormalTok{(sbphd)}\OperatorTok{/}\KeywordTok{sqrt}\NormalTok{(n)}
+\NormalTok{mhd; sehd}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## [1] 142.395
+\end{verbatim}
+
+\begin{verbatim}
+## [1] 4.808816
+\end{verbatim}
+
+\begin{Large}\begin{center}\textbf{Cautionary note}\end{center}\end{Large}
+
+The imputed values from regression imputation and stochastic regression
+imputation are only as good as the model used to impute them and so, as
+we have emphasised assumptions must be checked. If the model that we use
+to impute the values is poorly specified this can lead to invalid
+estimates of the target parameters. Thus far, we have used normal linear
+regression models, which assume normality of the error terms,
+homoscedasticity (i.e., the variance of the error terms is constant or,
+equivalently, does not change with the covariates), independence of the
+error terms, and that the relationship between the response variable and
+the covariates is linear. All these assumptions can be checked
+informally using diagnostic plots (c.f. your favourite regression book.
+I like the following that is available online from the library:
+\emph{Linear Models with R}, with the author being Julian Faraway).
+
+We give a specific example concerning the linearity of the relationship
+between the response and the covariates. Let us use the
+\texttt{airquality} data set again. Below we have a scatterplot of the
+variables wind and ozone (which, as we already know, has missing values,
+but this is not the point here).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\KeywordTok{plot}\NormalTok{(airquality}\OperatorTok{$}\NormalTok{Wind, airquality}\OperatorTok{$}\NormalTok{Ozone, }\DataTypeTok{xlab =} \StringTok{"Wind"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Ozone"}\NormalTok{, }\DataTypeTok{lwd =} \DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{w3-exercises_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+There is some `curvature' in the data. Below we show the scatterplot of
+the data with the fitted regression line superimposed.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fit \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(Ozone }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{Wind, }\DataTypeTok{data =}\NormalTok{ airquality)}
+
+\KeywordTok{plot}\NormalTok{(airquality}\OperatorTok{$}\NormalTok{Wind, airquality}\OperatorTok{$}\NormalTok{Ozone, }\DataTypeTok{xlab =} \StringTok{"Wind"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Ozone"}\NormalTok{, }\DataTypeTok{lwd =} \DecValTok{2}\NormalTok{)}
+\KeywordTok{abline}\NormalTok{(fit, }\DataTypeTok{lwd =} \DecValTok{2}\NormalTok{, }\DataTypeTok{col =} \StringTok{"red"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{w3-exercises_files/figure-latex/unnamed-chunk-6-1.pdf}
+
+The fit is not terrible, but let us see if we can improve it. The
+nonlinear curvature might suggest the inclusion of a quadratic term. We
+have then fitted the model \begin{equation*}
+\text{Ozone}=\beta_0+\beta_1\text{Wind}+\beta_2\text{Wind}^2+\epsilon,\qquad \epsilon\sim\text{N}(0,\sigma^2).
+\end{equation*} Below, we show the scatterplot of the data along with
+the quadratic fit, which seems better.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{fit2 \textless{}{-}}\StringTok{ }\KeywordTok{lm}\NormalTok{(Ozone }\OperatorTok{\textasciitilde{}}\StringTok{ }\NormalTok{Wind }\OperatorTok{+}\StringTok{ }\KeywordTok{I}\NormalTok{(Wind}\OperatorTok{\^{}}\DecValTok{2}\NormalTok{), }\DataTypeTok{data =}\NormalTok{ airquality)}
+
+\NormalTok{gridwind \textless{}{-}}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\StringTok{"Wind"}\NormalTok{ =}\StringTok{ }\KeywordTok{seq}\NormalTok{(}\KeywordTok{min}\NormalTok{(airquality}\OperatorTok{$}\NormalTok{Wind), }\KeywordTok{max}\NormalTok{(airquality}\OperatorTok{$}\NormalTok{Wind), }\DataTypeTok{len =} \DecValTok{100}\NormalTok{))}
+\NormalTok{pred \textless{}{-}}\StringTok{ }\KeywordTok{predict}\NormalTok{(fit2, }\DataTypeTok{newdata =}\NormalTok{ gridwind)}
+
+\KeywordTok{plot}\NormalTok{(airquality}\OperatorTok{$}\NormalTok{Wind, airquality}\OperatorTok{$}\NormalTok{Ozone, }\DataTypeTok{lwd =} \DecValTok{2}\NormalTok{, }\DataTypeTok{xlab =} \StringTok{"Wind"}\NormalTok{, }\DataTypeTok{ylab =} \StringTok{"Ozone"}\NormalTok{)}
+\KeywordTok{lines}\NormalTok{(}\KeywordTok{seq}\NormalTok{(}\KeywordTok{min}\NormalTok{(airquality}\OperatorTok{$}\NormalTok{Wind), }\KeywordTok{max}\NormalTok{(airquality}\OperatorTok{$}\NormalTok{Wind), }\DataTypeTok{len =} \DecValTok{100}\NormalTok{), pred, }
+      \DataTypeTok{col =} \StringTok{"blue2"}\NormalTok{, }\DataTypeTok{lwd =} \DecValTok{2}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{w3-exercises_files/figure-latex/unnamed-chunk-7-1.pdf}
+
+The issue of nonlinear relationships between the response and the
+covariates would lead us to the topic of nonparametric regression, which
+out of the scope of this course. To conclude, I will simulate one data
+set from a normal linear model where the variance is not constant and we
+will check how the scatter plot looks like.
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{n \textless{}{-}}\StringTok{ }\DecValTok{200}
+\NormalTok{x \textless{}{-}}\StringTok{ }\KeywordTok{runif}\NormalTok{(n)}
+\NormalTok{y \textless{}{-}}\StringTok{ }\KeywordTok{rnorm}\NormalTok{(n, }\DecValTok{1} \OperatorTok{+}\StringTok{ }\NormalTok{x, }\DecValTok{2}\OperatorTok{*}\NormalTok{x)}
+\KeywordTok{plot}\NormalTok{(x, y)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{w3-exercises_files/figure-latex/unnamed-chunk-8-1.pdf}
+
+From the scatterplot above we clearly see that the dispersion increases
+as \(x\) increases, a clear sign of heteroscedasticity (and, of course,
+we know it should be like this because we have simulated the data in
+that way). There are several ways of dealing with heteroscedasticity
+(e.g., transformations of the response and/or covariates, modelling the
+variance function explicitly, weighted least squares, etc) but again
+this is out of the scope of this course. However, later when learning
+about multiple imputation, we will see software and imputation methods
+that can help us in these situations.
+
+\end{document}

@@ -1,0 +1,219 @@
+---
+title: "Week 3 Exercises"
+author: "Callum Abbott"
+date: "15/10/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+### 2a. 
+#### Carry out a complete case analysis to find the mean value of systolic blood pressure
+#### overall, and by gender. Also compute the associated standard error of the mean.
+```{r, cca}
+# Load in data
+load("datasbp.Rdata")
+# CCA Overall
+overall_sbp = mean(datasbp[, 4], na.rm = TRUE)
+overall_error = sd(datasbp[, 4], na.rm = TRUE) / sqrt(length(datasbp[, 4]))
+# CCA Male
+male_sbp = mean(datasbp[12, 4], na.rm = TRUE)
+male_error = sd(datasbp[12, 4], na.rm = TRUE) / sqrt(length(datasbp[12, 4]))
+# CCA Female
+female_sbp = mean(datasbp[13:20, 4], na.rm = TRUE)
+female_error = sd(datasbp[13:20, 4], na.rm = TRUE) / sqrt(length(datasbp[13:20, 4]))
+
+# Vanda's Method
+ind = which(is.na(datasbp$SBP) == FALSE)
+mccoverall = mean(datasbp$SBP[ind])
+seccoverall = sd(datasbp$SBP[ind]) / sqrt(length(ind))
+mccoverall; seccoverall
+
+indf = which(is.na(datasbp$SBP) == FALSE & datasbp$Sex == "Female")
+mccf = mean(datasbp$SBP[indf])
+seccf = sd(datasbp$SBP[indf]) / sqrt(length(datasbp$SBP[indf]))
+mccf; seccf
+
+indm = which(is.na(datasbp$SBP) == FALSE & datasbp$Sex == "Male")
+mccm = mean(datasbp$SBP[indm])
+seccm = sd(datasbp$SBP[indm]) / sqrt(length(datasbp$SBP[indm]))
+mccm; seccm
+```
+
+The standard error I computed were wrong since the NAs were included in the sample size,
+further reducing the standard error of our estimates more than CCA already does!
+
+### 2b.
+#### Impute the missing values of systolic blood pressure by mean imputation. Use these
+#### filled in values to estimate the mean systolic blood pressure with the corresponding
+#### standard error.
+
+```{r, mean_imputation}
+# Finding NAs in dataset
+na_inds = which(is.na(datasbp$SBP) == TRUE)
+# Mean imputation
+datasbp$SBP[na_inds] = mccoverall
+# Mean and SD after imputation
+mimp_mean = mean(datasbp$SBP)
+mimp_err = sd(datasbp$SBP) / sqrt(length(datasbp$SBP))
+mimp_mean; mimp_err
+
+# Vanda's Method
+sbpmi = ifelse(is.na(datasbp$SBP) == TRUE, mean(datasbp$SBP, na.rm = TRUE), datasbp$SBP)
+n = length(sbpmi)
+mmi = mean(sbpmi)
+semi = sd(sbpmi)/sqrt(n)
+mmi; semi
+```
+### 2c. 
+#### Impute the missing values for systolic blood pressure by regression imputation, regressing on gender and age. 
+#### Write down the regression equation used and the four imputed values obtained. Use these to estimate the mean systolic blood pressure and the associated standard error.
+We will now use regression imputation, conditioning on sex and age, to impute the missing SBP values and consequently compute its mean and associated standard error. The regression model used is as follows
+\begin{equation*}
+\text{SBP}=\beta_{0}+\beta_{1}\text{Age}+\beta_{2}\text{Sex}+\varepsilon,\qquad \varepsilon\sim{N}(0,\sigma^2).
+\end{equation*}
+Here, gender is a dummy (binary) variable taking the value $0$ if the subject is female (reference category) and $1$ if the subject is male. This is in accordance with what \texttt{R} does. To check whether the variable is coded as a factor we do the following.
+
+
+```{r, include = TRUE, message = FALSE}
+# Checking discrete vars are encoded as factors
+is.factor(datasbp$Sex)
+levels(datasbp$Sex)
+```
+Factors in \texttt{R} are ordered alphabetically, and so female is chosen as the reference category.
+
+The expected values for SBP are then
+\begin{equation*}
+E(\text{SBP})=\begin{cases}
+\beta_0+\beta_1\text{Age} & \mbox{ if the subject is female,}\\
+(\beta_0+\beta_2)+\beta_1\text{Age} & \mbox{ if the subject is male.}
+\end{cases}
+\end{equation*}
+
+We fit the regression model to the complete cases, obtain estimated regression coefficients $\widehat{\beta}_0$,  $\widehat{\beta}_1$, and $\widehat{\beta}_2$, and then we impute the SBP values based on the regression equation. The estimated regression coefficients are $\widehat{\beta}_0=40.8784$, $\widehat{\beta}_1=1.6518$, and $\widehat{\beta}_2=29.6318$. The imputed values (rounded to two decimal places) are then
+\begin{center}
+\begin{tabular}{cccc}
+Subject number & Sex & Age & Imputed SBP\\ \hline
+6 & Male & 45 & 144.84\\
+13 & female & 57 & 135.03\\
+15 & female & 56 & 133.38\\
+17 & Female & 48 & 120.17
+\end{tabular}
+\end{center}
+
+ We can easily fit such model in \texttt{R}.
+
+``` {r, regression_imputation}
+load("datasbp.Rdata")
+fitsbp = lm(SBP ~ Age + Sex, data = datasbp)
+summary(fitsbp)
+#Two different ways of extracting the regression coefficients.
+fitsbp$coefficients
+```
+
+To automatically compute the predicted values, we use the function \texttt{predict}. We just need to pass to this function our fitted regression model, \texttt{fitsbp}, and the new values to predict. In this case, for the sake of simplicity, we have passed the entire data set, but we are, obviously, only interested in predicting the \texttt{NA} values and so all the other values in such variable should be ignored (as they correspond to predictions for values that we actually observe). 
+
+``` {r, pred}
+predri = predict(fitsbp, newdata = datasbp)
+predri[6]; predri[13]; predri[15]; predri[17]
+
+sbpri = ifelse(is.na(datasbp$SBP) == TRUE, predri, datasbp$SBP)
+
+mri = mean(sbpri)
+seri = sd(sbpri) / sqrt(n)
+mri; seri
+```
+We should examine whether the linearity assumption is roughly met. We can informally check it using a plot of the fitted values against the residuals. If the assumption is met, no pattern should be visible.
+```{r, include = TRUE, message = FALSE}
+plot(fitsbp$fitted.values, residuals(fitsbp), xlab = "Fitted values", ylab = "Residuals")
+```
+
+There is no obvious pattern, so there is no reason to suspect of a nonlinear relationship or of no constant variance. Although it is not of fundamental importance here in regression imputation, we can also check the assumption of normality of error terms using a QQ-plot.
+```{r, include = TRUE, message = FALSE}
+qqnorm(rstandard(fitsbp), xlim = c(-3, 3), ylim = c(-3, 3))
+qqline(rstandard(fitsbp), col = 2)
+```
+
+### 2d.
+#### The same as in (c) but now using stochastic regression imputation.
+```{r, stoch_imp}
+set.seed(1)
+predsri <- predict(fitsbp, newdata = datasbp) + rnorm(n, 0, sigma(fitsbp))
+predsri[6]; predsri[13]; predsri[15]; predsri[17]
+
+sbpsri <- ifelse(is.na(datasbp$SBP) == TRUE, predsri, datasbp$SBP)  
+
+msri <- mean(sbpsri)
+sesri <- sd(sbpsri)/sqrt(n)
+msri; sesri
+```
+
+
+### 2e.
+#### Suppose that hot deck imputation is to be used with strata defined by gender and age (≤ 50 years and > 50 years). Estimate the mean systolic blood pressure with the associated standard error.
+Finally, we apply the hot deck imputation method. We are told to define the strata based on gender and age (younger or 50 years old and older than 50 years old). For instance, we see that subject number 6 is male and is 45 years old. Thus, possible candidates to give him his SBP value are subjects number 1, 2, 7, and 8. We now just need to pick one of these subjects in a random fashion. The estimated mean SBP is $142.40$ ($4.809$).
+
+```{r, include = TRUE, message = FALSE}
+indhdm1 <- which(is.na(datasbp$SBP) == FALSE & datasbp$Sex == "Male" & datasbp$Age <= 50)
+indhdm1
+donor6 <- sample(indhdm1, 1, replace = TRUE)
+donor6
+
+indhdf1 <- which(is.na(datasbp$SBP) == FALSE & datasbp$Sex == "Female" & datasbp$Age <= 50)
+indhdf1
+donor17 <- sample(indhdf1, 1, replace = TRUE)
+donor17
+
+indhdf2 <- which(is.na(datasbp$SBP) == FALSE & datasbp$Sex == "Female" & datasbp$Age > 50)
+indhdf2
+donor13 <- sample(indhdf2, 1, replace = TRUE)
+donor15 <- sample(indhdf2, 1, replace = TRUE)
+donor13; donor15
+
+#creating a new sbp variable with imputed values from the hot deck procedure
+sbphd <- c(datasbp$SBP[is.na(datasbp$SBP) == FALSE],datasbp$SBP[donor6],datasbp$SBP[donor17],
+        datasbp$SBP[donor13],datasbp$SBP[donor15]) 
+mhd <- mean(sbphd); sehd <- sd(sbphd)/sqrt(n)
+mhd; sehd
+```
+
+\begin{Large}\begin{center}\textbf{Cautionary note}\end{center}\end{Large}
+The imputed values from regression imputation and stochastic regression imputation are only as good as the model used to impute them and so, as we have emphasised assumptions must be checked. If the model that we use to impute the values is poorly specified this can lead to invalid estimates of the target parameters. Thus far, we have used normal linear regression models, which assume normality of the error terms, homoscedasticity (i.e., the variance of the error terms is constant or, equivalently, does not change with the covariates), independence of the error terms, and that the relationship between the response variable and the covariates is linear. All these assumptions can be checked informally using diagnostic plots (c.f. your favourite regression book. I like the following that is available online from the library: \emph{Linear Models with R}, with the author being Julian Faraway). 
+
+We give a specific example concerning the linearity of the relationship between the response and the covariates. Let us use the \texttt{airquality} data set again. Below we have a scatterplot of the variables wind and ozone (which, as we already know, has missing values, but this is not the point here). 
+```{r, include = TRUE, message = FALSE}
+plot(airquality$Wind, airquality$Ozone, xlab = "Wind", ylab = "Ozone", lwd = 2)
+```
+
+There is some `curvature' in the data. Below we show the scatterplot of the data with the fitted regression line superimposed.
+```{r, include = TRUE, message = FALSE}
+fit <- lm(Ozone ~ Wind, data = airquality)
+
+plot(airquality$Wind, airquality$Ozone, xlab = "Wind", ylab = "Ozone", lwd = 2)
+abline(fit, lwd = 2, col = "red")
+```
+
+The fit is not terrible, but let us see if we can improve it. The nonlinear curvature might suggest the inclusion of a quadratic term. We have then fitted the model
+\begin{equation*}
+\text{Ozone}=\beta_0+\beta_1\text{Wind}+\beta_2\text{Wind}^2+\epsilon,\qquad \epsilon\sim\text{N}(0,\sigma^2).
+\end{equation*}
+Below, we show the scatterplot of the data along with the quadratic fit, which seems better.
+```{r, include = TRUE, message = FALSE}
+fit2 <- lm(Ozone ~ Wind + I(Wind^2), data = airquality)
+
+gridwind <- data.frame("Wind" = seq(min(airquality$Wind), max(airquality$Wind), len = 100))
+pred <- predict(fit2, newdata = gridwind)
+
+plot(airquality$Wind, airquality$Ozone, lwd = 2, xlab = "Wind", ylab = "Ozone")
+lines(seq(min(airquality$Wind), max(airquality$Wind), len = 100), pred, 
+      col = "blue2", lwd = 2)
+```
+
+The issue of nonlinear relationships between the response and the covariates would lead us to the topic of nonparametric regression, which out of the scope of this course. To conclude, I will simulate one data set from a normal linear model where the variance is not constant and we will check how the scatter plot looks like. 
+```{r, include = TRUE, message = FALSE}
+n <- 200
+x <- runif(n)
+y <- rnorm(n, 1 + x, 2*x)
+plot(x, y)
+```
+
+From the scatterplot above we clearly see that the dispersion increases as $x$ increases, a clear sign of heteroscedasticity (and, of course, we know it should be like this because we have simulated the data in that way). There are several ways of dealing with heteroscedasticity (e.g., transformations of the response and/or covariates, modelling the variance function explicitly, weighted least squares, etc) but again this is out of the scope of this course. However, later when learning about multiple imputation, we will see software and imputation methods that can help us in these situations. 

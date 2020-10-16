@@ -122,12 +122,11 @@ dataset = get_dataset(nsim, 0, 1)
 # Missingness indicator params
 a = 2; b = 0
 # Defining missingness indicator
-r = a * (complete_dataset$Y1 - 1) + b * (complete_dataset$Y2 - 5) + 
-         complete_dataset$Z3 
+r = a * (dataset$Y1 - 1) + b * (dataset$Y2 - 5) + dataset$Z3 
 
 # Imposing missingness
-mis_indxs = which(r < 0)
-dataset$Y2[mis_indxs] = NA
+mis_idxs = which(r < 0)
+dataset$Y2[mis_idxs] = NA
 
 # Regressing Y2 on Y1
 fits = lm(Y2 ~ Y1, data = dataset[c(1, 2)])
@@ -220,8 +219,7 @@ dataset = get_dataset(nsim, 0, 1)
 # Missingness indicator params
 a = 0; b = 2
 # Defining missingness indicator
-r = a * (complete_dataset$Y1 - 1) + b * (complete_dataset$Y2 - 5) + 
-         complete_dataset$Z3 
+r = a * (dataset$Y1 - 1) + b * (dataset$Y2 - 5) + dataset$Z3 
 
 # Imposing missingness
 mis_indxs = which(r < 0)
@@ -256,5 +254,105 @@ We also check that our linear regression fit on Y2 with Y1 is valid before movin
 ```{r, include = TRUE, message = FALSE}
 plot(fits$fitted.values, residuals(fits), xlab = "Fitted values", ylab = "Residuals")
 ```
+
+# Question 4
+* **Description:** It is sometimes necessary to lower a patient’s blood pressure during surgery, using a hypotensive drug. Such drugs are administrated continuously during the relevant phase of the operation; because the duration of this phase varies, so does the total amount of drug administered. Patients also vary in the extent to which the drugs succeed in lowering blood pressure. The sooner the blood pressure rises again to normal after the drug is discontinued, 2
+the better. The dataset databp.Rdata available on Learn, a partial missing value version of the data presented by Robertson and Armitage (1959), relate to a particular hypotensive drug and give the time in minutes before the patient’s systolic blood pressure returned to 1000mm of mercury (the recovery time), the logarithm (base 10)  of the dose of drug in milligrams (you can use this variable as is, no need to transform it to the original scale), and the average systolic blood pressure achieved while the drug was being administered.
+
+## Question (4a)
+* **Description:** Carry out a complete case analysis to find the mean value of the recovery time (and associated standard error) and to find also the (Pearson) correlations between the recovery time and the dose and between the recovery time and blood pressure.
+
+* **Answer:**
+
+``` {r, include=TRUE, message=FALSE}
+# Load in data
+load("databp.Rdata")
+
+# Filter out NAs
+idxs = which(is.na(databp$recovtime) == FALSE)
+cca_recovtime = databp$recovtime[idxs]
+cca_mean = mean(cca_recovtime)
+cca_err = sd(cca_recovtime) / sqrt(length(idxs))
+
+# Correlation coeffs
+cca_cor_rdose = cor(cca_recovtime, exp(databp$logdose)[idxs], method = "pearson")
+cca_cor_rbp = cor(cca_recovtime, databp$bloodp[idxs], method = "pearson")
+
+# Displaying to console
+cca_mean; cca_err; cca_cor_rbp; cca_cor_rdose
+```
+
+## Question (4b)
+* **Description:** The same as in (a) but using mean imputation.
+
+* **Answer:**
+```{r, include=TRUE, message=FALSE}
+# Conduct mean imputation
+mi_recovtime = ifelse(is.na(databp$recovtime) == TRUE, mean(databp$recovtime, na.rm = TRUE), databp$recovtime)
+
+# Calculate statistics
+n = length(mi_recovtime)
+mi_mean = mean(mi_recovtime)
+mi_err= sd(mi_recovtime) / sqrt(n)
+
+# Correlation coeffs
+mi_cor_rdose = cor(mi_recovtime, exp(databp$logdose), method = "pearson")
+mi_cor_rbp = cor(mi_recovtime, databp$bloodp, method = "pearson")
+
+mi_mean; mi_err; mi_cor_rbp; mi_cor_rdose 
+```
+
+
+## Question (4c)
+* **Description:** The same as in (b) but using mean regression imputation.
+
+* **Answer:**
+```{r, reg_imp, message=FALSE, include=TRUE}
+set.seed(1)
+ri_fits = lm(databp$recovtime ~ databp$logdose + databp$bloodp, data = databp)
+ri_pred = predict(ri_fits, newdata = databp)
+ri_recovtime = ifelse(is.na(databp$recovtime) == TRUE, ri_pred, databp$recovtime)
+
+# Mean and STD error
+n = length(ri_recovtime)
+ri_mean = mean(ri_recovtime)
+ri_err = sd(ri_recovtime) / sqrt(n)
+
+# Correlation coeffs
+ri_cor_rdose = cor(ri_recovtime, exp(databp$logdose), method = "pearson")
+ri_cor_rbp = cor(ri_recovtime, databp$bloodp, method = "pearson")
+
+plot(ri_fits$fitted.values, residuals(ri_fits), xlab = "Fitted values", ylab = "Residuals")
+
+ri_mean; ri_err; ri_cor_rbp; ri_cor_rdose
+```
+## Question (4d)
+* **Description:** The same as in (c) but using stochastic regression imputation.
+
+* **Answer:**
+```{r, sri_4, message=FALSE, include=TRUE}
+set.seed(1)
+sri_fits = lm(databp$recovtime ~ databp$logdose + databp$bloodp, data = databp)
+sri_pred = predict(sri_fits, newdata = databp) + rnorm(nrow(databp), 0, sigma(sri_fits))
+sri_recovtime = ifelse(is.na(databp$recovtime) == TRUE, sri_pred, databp$recovtime)
+
+# Mean and STD error
+n = length(sri_recovtime)
+sri_mean = mean(sri_recovtime)
+sri_err = sd(sri_recovtime) / sqrt(n)
+
+# Correlation coeffs
+sri_cor_rdose = cor(sri_recovtime, exp(databp$logdose), method = "pearson")
+sri_cor_rbp = cor(sri_recovtime, databp$bloodp, method = "pearson")
+
+plot(sri_fits$fitted.values, residuals(sri_fits), xlab = "Fitted values", ylab = "Residuals")
+
+sri_mean; sri_err; sri_cor_rbp; sri_cor_rdose
+```
+
+## Question (4e)
+* **Question**: You will now conduct the same analysis but applying another technique called predictive mean matching (Little, 1988), which is a special type of hot deck imputation. In the simplest form of this method (and the one you will use here), a regression model is used to predict the variables with missing values from the other (complete) variables. For each subject with a missing value, the donor is chosen to be the subject with a predicted value of her or his own that is closest (to be measured by the squared difference) to the prediction for the subject with the missing value. 
+
+
 
 

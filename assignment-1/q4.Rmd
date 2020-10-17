@@ -1,0 +1,126 @@
+---
+title: "IDA - Assignment 1"
+author: "Callum Abbott"
+output:
+  html_document:
+    df_print: paged
+  highlight: github
+  rmarkdown::html_document: null
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(1)
+load("databp.Rdata")
+```
+
+```{r helper_funcs}
+# Missingness indicator for the recovery time variable
+R_func = function(data) {!is.na(data$recovtime)}
+R = R_func(databp)
+
+# Helper function for calculating the mean and standard error and correlation
+# for a dataset
+get_statistics <- function(data) {
+  # Create an empty list to store the statistics
+  results <- NULL
+  
+ # Compute mean ignoring missing values
+  results$mean <- mean(data$recovtime, na.rm = TRUE)
+  # Compute standard error as sd / sqrt(n) ignoring missing values
+  results$se <- sd(data$recovtime, na.rm = TRUE) / sqrt(sum(R_func(data)))
+  
+  # Compute correlations
+  results$cor <- NULL
+  results$cor$bloodp <- cor(data$recovtime, data$bloodp, use = 'complete.obs',method = 'pearson')
+  results$cor$dose <- cor(data$recovtime, exp(data$logdose), use = 'complete.obs', method = 'pearson') 
+  
+  # Display and return the statistics
+  cat(sprintf("Mean: %f\nStandard Error: %f\nCorrelation (dose): %f\nCorrelation (BP): %f", 
+              results$mean, results$se, results$cor$dose, results$cor$bloodp))
+  return(results)
+}
+```
+
+## 4a
+```{r 4a}
+cca_stats = get_statistics(databp)
+```
+
+
+## 4b
+```{r 4b}
+# Copy the dataset
+mi_data = databp
+# Mean imputation for recovery time
+mi_data[!R, 3] = cca_stats$mean
+# Store and report the statistics of the imputed data
+mi_stats = get_statistics(mi_data)
+```
+
+## 4c
+```{r 4c}
+# Copy the dataset
+ri_data = databp
+# Fit linear model for recovery time with blood pressure and log-dose as covariates
+ri_fits = lm(recovtime ~ logdose + bloodp, data = ri_data)
+# Impute missing recovery time values using model
+ri_data[!R, 3] = predict(ri_fits, ri_data[!R, 1:2])
+# Store and report the statistics of the imputed data
+ri_stats = get_statistics(ri_data)
+```
+
+
+## 4d
+```{r 4d}
+# Copy the dataset
+sri_data = databp
+# Fit linear model for recovery time with blood pressure and log-dose as covariates
+sri_fits = lm(recovtime ~ logdose + bloodp, data = sri_data)
+# Noise for stochastic regression imputation
+noise = rnorm(n = sum(!R), mean = 0, sd = sigma(sri_fits))
+# Impute missing recovery time values using model
+sri_data[!R, 3] = predict(sri_fits, sri_data[!R, 1:2]) + noise
+# Store and report the statistics of the imputed data
+sri_stats = get_statistics(sri_data)
+```
+
+
+## 4e
+```{r 4e}
+# Copy the dataset
+reg_data = databp
+# Recycling sri_fits to get prediction for every row
+reg_data[, 3] = predict(sri_fits, reg_data[, 1:2])
+# Empty list to store predictions
+preds = NULL
+
+# ----------------- PREDICTIVE MEAN MATCHING ALGORITHM  ----------------- #
+# Loop over missing subjects
+for (i_miss in which(!R)) {
+  # Predictions of recovery time for subjects with missing values
+  recov_time = reg_data[i_miss, 3]
+  
+  # Store distances
+  distances = vector(, nrow(reg_data))
+  
+  # Preventing the use of donors who originally has missing values
+  distances[!R] = Inf
+  
+  # Compute distances for observed values
+  distances[R] = (rep(recov_time, sum(R)) - reg_data[R, 3])^2
+  
+  # Get donor who has smallest distance
+  donor = which.min(distances)
+  cat(sprintf('Donor for subject %s is %s\n', i_miss, donor))
+  
+  # Store the original value of the recovery time from donor
+  preds = c(preds, reg_data[donor, 3])
+}
+# Copy data for predictive mean matching 
+pmm_data = databp
+# Overwrite NAs with predictions from above
+pmm_data[!R, 3] = preds
+# Store and report the statistics of the imputed data
+pmm_stats = get_statistics(pmm_data)
+```

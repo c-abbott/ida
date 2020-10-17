@@ -1,0 +1,143 @@
+---
+title: "IDA - Assignment 1"
+author: "Callum Abbott"
+output:
+  html_document:
+    df_print: paged
+  highlight: github
+  rmarkdown::html_document: null
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+set.seed(1)
+```
+
+```{r helper_funcs}
+plot_densities = function(data1, data2, ylim = NULL, save = FALSE) {
+  # Calculate y limit of both densities
+  ylim <- if (is.null(ylim)) range(d1$d$y, d2$d$y) else ylim
+  
+  # Plotting
+  if (save != FALSE){ pdf(save, width = 8, height = 6)}
+  plot(data1$d, lwd = 2, col = data1$col, xlab = expression(Y[2]), ylim = ylim, main = NA)
+  lines(data2$d, lwd = 2, col = data2$col)
+  legend('topleft', 
+    legend = c(data1$name, data2$name),
+    col = c(data1$col, data2$col),
+    lty = c(1, 1), lwd = c(2, 2), bty = 'n'
+  )
+  if (save != FALSE) { dev.off() }
+}
+
+# Helper function for calculating the mean and standard error on a dataset
+get_statistics <- function(data) {
+  # Create an empty list to store the statistics
+  results <- NULL
+  # Compute mean ignoring missing values
+  results$mean <- mean(data, na.rm = TRUE)
+  # Compute standard error as sd / sqrt(n) ignoring missing values
+  results$se <- sd(data, na.rm = TRUE) / sqrt(sum(Rfunc(a=2, b=0)))
+  return(results)
+}
+```
+
+## 3a
+```{r 3a}
+# Simulating Gaussian data
+nsim = 500
+Z1 = rnorm(500, 0, 1)
+Z2 = rnorm(500, 0, 1)
+Z3 = rnorm(500, 0, 1)
+
+# Define Y1 and Y2 from Z samples
+Y1 = 1 + Z1
+Y2 = 5 + 2 * Z1 + Z2
+Y2_miss = 5 + 2 * Z1 + Z2
+
+# Create missingness indicator for Y2
+Rfunc = function(a, b) { a * (Y1 - 1) + b * (Y2 - 5) + Z3 >= 0 }
+R = Rfunc(a=2, b=0)
+
+# Impose missingness
+Y2_miss[!R] = NA
+Y2_obs = Y2[R]
+
+# Plot densities for the complete and observed data (after imposing missingness) for Y2
+plot_densities(
+  list(d = density(Y2), name = 'Complete data', col = 'blue'), 
+  list(d = density(Y2_obs), name = 'Observed data', col = 'red'),
+  ylim = c(0, 0.30)
+)
+```
+
+
+## 3b
+```{r 3b}
+# Defining variables needed for SRI
+Y1_miss <- Y1[!R]
+n_miss <- sum(!R)
+Y2_sri = Y2_miss
+
+# Conducting SRI
+fits  = lm(Y2_miss ~ Y1)
+# Noise for stochastic regression imputation
+noise = rnorm(n_miss, mean = 0, sd = sigma(fits))
+Y2_sri[!R] = predict(fits, data.frame(Y1 = Y1_miss)) + noise
+
+# Plot densities for complete and SRI imputed data
+plot_densities(
+  list(d = density(Y2), name = 'Complete data', col = 'blue'), 
+  list(d = density(Y2_sri), name = 'SRI Imputed data', col = 'red'),
+  ylim = c(0, 0.27)
+)
+get_statistics(Y2_sri)
+```
+
+## 3c
+```{r 3c}
+# Define Y1 and Y2 from Z samples
+Y1 = 1 + Z1
+Y2 = 5 + 2 * Z1 + Z2
+Y2_miss = 5 + 2 * Z1 + Z2
+
+# Create missingness indicator for Y2
+R = Rfunc(a=0, b=2)
+
+# Impose missingness
+Y2_miss[!R] = NA
+Y2_obs = Y2[R]
+
+# Plot densities for the complete and observed data (after imposing missingness) for Y2
+plot_densities(
+  list(d = density(Y2), name = 'Complete data', col = 'blue'), 
+  list(d = density(Y2_obs), name = 'Observed data', col = 'red'),
+  ylim = c(0, 0.30)
+)
+
+```
+
+
+## 3d
+```{r 3d}
+# Defining variables needed for SRI
+Y1_miss <- Y1[!R]
+n_miss <- sum(!R)
+
+# Noise for stochastic regression imputation
+noise = rnorm(n_miss, mean = 0, sd = sigma(fits))
+
+
+# Conducting SRI
+fits  = lm(Y2_miss ~ Y1)
+Y2_sri = Y2_miss
+Y2_sri[!R] = predict(fits, data.frame(Y1 = Y1_miss)) + noise
+
+# Plot densities for complete and SRI imputed data
+plot_densities(
+  list(d = density(Y2), name = 'Complete data', col = 'blue'), 
+  list(d = density(Y2_sri), name = 'SRI Imputed data', col = 'red'),
+  ylim = c(0, 0.27)
+)
+get_statistics(Y2_sri)
+```

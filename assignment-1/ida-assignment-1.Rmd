@@ -14,6 +14,9 @@ knitr::opts_chunk$set(echo = TRUE)
 set.seed(1)
 load("databp.Rdata")
 ```
+# Code
+The Rmd file used to create this pdf can be found in the following repo https://github.com/c-abbott/ida
+under the sub-directory assignment-1/ida-assignment-1.Rmd
 
 # Question 1
 Let us suppose that on a (hypothetical) survey there is a question about alcohol consumption

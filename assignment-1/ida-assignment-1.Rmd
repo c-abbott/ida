@@ -21,7 +21,7 @@ and that the variable ALQ records the respondent’s answer to the following spe
 “In the past year, have you had at least 12 drinks of any type of alcoholic beverage?”. The
 possible answers are ‘Yes’ or ‘No’. Not all participants respond to this question, that is,
 the ALQ variable has some missing values. Further, and again hypothetically, suppose that
-we only have additional data on the gender of the participants in the survey (swhich is fully
+we only have additional data on the gender of the participants in the survey (which is fully
 observed). For each of the following situations, choose, justifying, the correct answer.
 
 ## Question (1a)
@@ -110,12 +110,11 @@ observed data of $Y2$ are **not congruent** (see below).
 
 ## Helper Functions
 ```{r helper_funcs}
-plot_densities = function(data1, data2, ylim = NULL, save = FALSE) {
+plot_densities = function(data1, data2, ylim = NULL) {
   # Calculate y limit of both densities
-  ylim <- if (is.null(ylim)) range(d1$d$y, d2$d$y) else ylim
+  ylim = if (is.null(ylim)) range(d1$d$y, d2$d$y) else ylim
   
   # Plotting
-  if (save != FALSE){ pdf(save, width = 8, height = 6)}
   plot(data1$d, lwd = 2, col = data1$col, xlab = expression(Y[2]), ylim = ylim, main = NA)
   lines(data2$d, lwd = 2, col = data2$col)
   legend('topleft', 
@@ -123,18 +122,15 @@ plot_densities = function(data1, data2, ylim = NULL, save = FALSE) {
     col = c(data1$col, data2$col),
     lty = c(1, 1), lwd = c(2, 2), bty = 'n'
   )
-  if (save != FALSE) { dev.off() }
 }
 
 # Helper function for calculating the mean and standard error on a dataset
-get_statistics <- function(data) {
+get_statistics =  function(data) {
   # Create an empty list to store the statistics
   results = NULL
-  # Compute mean ignoring missing values
+  # Computing CCA statistics
   results$mean = mean(data, na.rm = TRUE)
-  # Compute standard error as sd / sqrt(n) ignoring missing values
   results$se = sd(data, na.rm = TRUE) / sqrt(sum(Rfunc(a=2, b=0)))
-  # Compute standard deviation
   results$sd = sd(data, na.rm = TRUE)
   return(results)
 }
@@ -155,7 +151,7 @@ Y2_miss = 5 + 2 * Z1 + Z2
 
 # Create missingness indicator for Y2
 Rfunc = function(a, b) { a * (Y1 - 1) + b * (Y2 - 5) + Z3 >= 0 }
-R = Rfunc(a=2, b=0)
+R = Rfunc(a = 2, b = 0)
 
 # Impose missingness
 Y2_miss[!R] = NA
@@ -190,8 +186,8 @@ due to the relatively unbiased estimates of the mead and standard deviation.
 
 ```{r 3b}
 # Defining variables needed for SRI
-Y1_miss <- Y1[!R]
-n_miss <- sum(!R)
+Y1_miss = Y1[!R]
+n_miss = sum(!R)
 Y2_sri = Y2_miss
 
 # Conducting SRI
@@ -246,7 +242,7 @@ Y2 = 5 + 2 * Z1 + Z2
 Y2_miss = 5 + 2 * Z1 + Z2
 
 # Create missingness indicator for Y2
-R = Rfunc(a=0, b=2)
+R = Rfunc(a = 0, b = 2)
 
 # Impose missingness
 Y2_miss[!R] = NA
@@ -270,8 +266,8 @@ indicates that SRI produces **biased estimates** of missing values for MNAR data
 and so we should look towards methods such as MICE in order to reduce these biases.
 ```{r 3d}
 # Defining variables needed for SRI
-Y1_miss <- Y1[!R]
-n_miss <- sum(!R)
+Y1_miss = Y1[!R]
+n_miss = sum(!R)
 
 # Noise for stochastic regression imputation
 noise = rnorm(n_miss, mean = 0, sd = sigma(fits))
@@ -323,26 +319,24 @@ and blood pressure.
 R_func = function(data) {!is.na(data$recovtime)}
 R = R_func(databp)
 
-# Helper function for calculating the mean and standard error and correlation
-# for a dataset
+
 get_statistics = function(data) {
   # Storing statistics
   results = NULL
   
- # Compute mean ignoring missing values
-  results$mean <- mean(data$recovtime, na.rm = TRUE)
-  # Compute standard error 
-  results$se <- sd(data$recovtime, na.rm = TRUE) / sqrt(sum(R_func(data)))
-  # Compute correlations
-  results$cor <- NULL
-  results$cor$bloodp <- cor(data$recovtime, data$bloodp, use = 'complete.obs',
+ # Computing relevant statistics
+  results$mean = mean(data$recovtime, na.rm = TRUE)
+  results$se = sd(data$recovtime, na.rm = TRUE) / sqrt(sum(R_func(data)))
+  results$cor = NULL
+  results$cor$bloodp = cor(data$recovtime, data$bloodp, use = 'complete.obs',
                             method = 'pearson')
-  results$cor$logdose <- cor(data$recovtime, data$logdose, use = 'complete.obs',
+  results$cor$logdose = cor(data$recovtime, data$logdose, use = 'complete.obs',
                              method = 'pearson') 
   
   # Display and return the statistics
-  cat(sprintf("Mean: %f\nStandard Error: %f\nCorrelation (log-dose): %f\nCorrelation (BP): %f", 
-              results$mean, results$se, results$cor$logdose, results$cor$bloodp))
+  cat(sprintf("Mean: %f\nStandard Error: %f\nCorrelation (log-dose): 
+              %f\nCorrelation (BP): %f", results$mean, results$se, 
+              results$cor$logdose, results$cor$bloodp))
   return(results)
 }
 ```

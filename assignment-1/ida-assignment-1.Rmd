@@ -90,7 +90,7 @@ leaving a total of **0 subjects** under a complete case analysis.
 defined as follows:
 \begin{equation*}
 Y_1 = 1+ Z_1, \;
-Y_2 = 5 + 2 \times Z1 + Z2
+Y_2 = 5 + 2 \times Z_1 + Z_2
 \end{equation*}
 where $Y_1$ is fully observed but $Y_2$ is subject to missingness. Further consider
 that $Y2$ is missing if $a \times (Y_1 - 1) + b \times (Y_2 - 5) + Z_3 < 0$, where
@@ -110,6 +110,15 @@ $a=2$ and $b=0$, is only dependent on $Y_1$. This, by definition, tells us that
 the missing data for $Y_2$ will be MAR. Our beliefs are then confirmed after 
 observing that the distributions (density and box) of the complete, missing and
 observed data of $Y2$ are **not congruent** (see below).
+
+However, one cannot rule out the missing data mechanism being MNAR since $Y_1 = 1 + Z_1$ and
+$Y_2 = 5 + 2 \times Z_1 + Z_2$. This means that the missingness in $Y_2$ **could**
+also result in missingness in $Z_1$ and hence $Y_1$ too. This depends on how the 
+missing information is distributed across the $Z_1$ and $Z_2$ variables which we have no 
+knowledge of. In summary, if the cause of the missingness in $Y_2$ is confined to the $Z_2$
+variable then the missing data is MAR. If the cause the of the missignness in
+$Y_2$ is spread across $Z_2$ and $Z_1$, the missing data is MNAR. We should bear
+this in mind as we continue our analysis.
 
 ## Helper Functions
 ```{r helper_funcs}
@@ -184,8 +193,8 @@ I observe their means to both be $\approx 5$. I have also
 computed the standard deviations for both distributions and observe the standard
 deviation of `Y2_sri` to be slightly larger (2.31) than the complete `Y2` (2.24)
 distribution which is reflective of the stochastic noise we added to `Y2_sri`. 
-Overall, I believe SRI has done a good job at imputing the missing data values 
-due to the relatively unbiased estimates of the mead and standard deviation.
+Overall, I believe stochastic regression imputation (SRI) has performed well at imputing the missing data values 
+due to the relatively unbiased estimates of the mean and standard deviation. This therefore confirms that the missing data mechanism we are working with is actually MAR due to the SRI's good performance.
 
 ```{r 3b}
 # Defining variables needed for SRI
@@ -217,11 +226,22 @@ cat(sprintf("SRI Mean: %f\nSRI Standard Error: %f\nSRI Standard Deviation: %f\n"
 ```
 
 ## Linear Model Check
-We also check that our linear model fit on Y2 with Y1 is valid before moving on 
-by plotting the residuals. We see no correlation between the residuals and the 
-fitted values, and hence, the linear regression fit was valid.
+We also check that our linear model fit on Y2 with Y1 is valid before moving on.
+The final regression formula is observed to be $Y_2 = 2.87014 + 2.00000 * Y_1$ 
+where both coefficients are significant to a level of 0.01 indicating a valid
+linear model.
+Furthermore, we also observe no correlation between the residuals and the 
+fitted values, in addition to reasonable congruence in the q-q plot all of which
+futher enforces the validity of our linear model.
+
 ```{r, include = TRUE, message = FALSE}
+# Summary of model
+summary(fits)
+# Regression plot
 plot(fits$fitted.values, residuals(fits), xlab = "Fitted values", ylab = "Residuals")
+# q-q plot
+qqnorm(rstandard(fits), xlim = c(-3, 3), ylim = c(-3, 3))
+qqline(rstandard(fits), col = 2)
 ```
 
 ## Question (3c)
@@ -237,6 +257,8 @@ the missing data for $Y_2$ will be MNAR since the missingess depends on the miss
 variable itself. Our beliefs are then confirmed after observing that the distributions
 (density and box) of the complete, missing and observed data of $Y2$ are **even
 less congruent** than the plots seen in 3(a) (see below).
+
+The plots show that the density of $Y_2 < 5$ decreased significantly and was redistributed over higher values of $Y_2$ when missingness was imposed. We can explain this behavior by recalling the missingness indicator formula: $r = a \times (Y_1 - 1) + b \times (Y_2 - 5) + Z_3 < 0$.  We see that if $Y_2 < 5$, then the value of $r$ is reduced which in turn increases the probability of those values being missing.
 
 ```{r 3c}
 # Define Y1 and Y2 from Z samples
@@ -316,36 +338,31 @@ the recovery time (and associated standard error) and to find also the (Pearson)
 correlations between the recovery time and the dose and between the recovery time 
 and blood pressure.
 
-* **Answer:**
+* **Answer:** 
 ```{r helper_funcs_4}
 # Missingness indicator for the recovery time variable
 R_func = function(data) {!is.na(data$recovtime)}
 R = R_func(databp)
 
-
-get_statistics = function(data) {
-  # Storing statistics
+get_statistics = function(data, na.rm=TRUE, method) {
   results = NULL
-  
- # Computing relevant statistics
-  results$mean = mean(data$recovtime, na.rm = TRUE)
-  results$se = sd(data$recovtime, na.rm = TRUE) / sqrt(sum(R_func(data)))
-  results$cor = NULL
-  results$cor$bloodp = cor(data$recovtime, data$bloodp, use = 'complete.obs',
+  results$method = method
+  # Computing relevant statistics
+  results$mean = mean(data$recovtime, na.rm = na.rm)
+  results$se = sd(data$recovtime, na.rm = na.rm) / sqrt(sum(R_func(data)))
+  results$cor_bp = cor(data$recovtime, data$bloodp, use = 'complete.obs',
                             method = 'pearson')
-  results$cor$logdose = cor(data$recovtime, data$logdose, use = 'complete.obs',
+  results$cor_dose = cor(data$recovtime, data$logdose, use = 'complete.obs',
                              method = 'pearson') 
-  
-  # Display and return the statistics
-  cat(sprintf("Mean: %f\nStandard Error: %f\nCorrelation (log-dose): 
-              %f\nCorrelation (BP): %f", results$mean, results$se, 
-              results$cor$logdose, results$cor$bloodp))
   return(results)
 }
 ```
 
 ```{r 4a}
-cca_stats = get_statistics(databp)
+stats = data.frame(matrix(ncol = 5, nrow = 0))
+cca_stats = get_statistics(databp, method = "CCA")
+stats = rbind(stats, cca_stats)
+stats
 ```
 
 ## Question (4b)
@@ -358,7 +375,9 @@ mi_data = databp
 # Mean imputation for recovery time
 mi_data[!R, 3] = cca_stats$mean
 # Store and report the statistics of the imputed data
-mi_stats = get_statistics(mi_data)
+mi_stats = get_statistics(mi_data, method = "MI")
+stats = rbind(stats, mi_stats)
+stats
 ```
 
 ## Question (4c)
@@ -373,16 +392,28 @@ ri_fits = lm(recovtime ~ logdose + bloodp, data = ri_data)
 # Impute missing recovery time values using model
 ri_data[!R, 3] = predict(ri_fits, ri_data[!R, 1:2])
 # Store and report the statistics of the imputed data
-ri_stats = get_statistics(ri_data)
+ri_stats = get_statistics(ri_data, method = "RI")
+stats = rbind(stats, ri_stats)
+stats
 ```
 
 ## Linear Model Check
-We also check that our linear model fit on the recovery time with blood pressure 
-and log-dose is valid before moving on  by plotting the residuals. We see no
-correlation between the residuals and the fitted values, and hence, the linear
-regression fit was valid.
+We also check that our linear model fit on Y2 with Y1 is valid before moving on.
+The final regression formula is observed to be $recovtime = 15.2158 + 11.4290*logdose - 0.2769*bloodp$ 
+but all of these coefficients are considered to be insignificant for $\alpha = 0.05$.
+This indicates a linear model is not sufficient in this context.
+
+The residual and Q-Q plots are also unconvincing further reinforcing the argument
+that our linear model is not sufficient for modelling the recovery time
+accurately.
 ```{r, include = TRUE, message = FALSE}
+# Summary of model
+summary(ri_fits)
+# Regression plot
 plot(ri_fits$fitted.values, residuals(ri_fits), xlab = "Fitted values", ylab = "Residuals")
+# q-q plot
+qqnorm(rstandard(ri_fits), xlim = c(-3, 3), ylim = c(-3, 3))
+qqline(rstandard(ri_fits), col = 2)
 ```
 
 ## Question (4d)
@@ -400,7 +431,9 @@ noise = rnorm(n = sum(!R), mean = 0, sd = sigma(sri_fits))
 # Impute missing recovery time values using model
 sri_data[!R, 3] = predict(sri_fits, sri_data[!R, 1:2]) + noise
 # Store and report the statistics of the imputed data
-sri_stats = get_statistics(sri_data)
+sri_stats = get_statistics(sri_data, method = "SRI")
+stats = rbind(stats, sri_stats)
+stats
 ```
 
 ## Question (4e)
@@ -418,7 +451,7 @@ set.seed(1)
 # Copy the dataset
 reg_data = databp
 # Recycling sri_fits to get prediction for every row
-reg_data[, 3] = predict(sri_fits, reg_data[, 1:2])
+reg_data[, 3] = predict(sri_fits, reg_data[, 1:2]) 
 # Empty list to store predictions
 preds = NULL
 
@@ -449,8 +482,49 @@ pmm_data = databp
 # Overwrite NAs with predictions from above
 pmm_data[!R, 3] = preds
 # Store and report the statistics of the imputed data
-pmm_stats = get_statistics(pmm_data)
+pmm_stats = get_statistics(pmm_data, na.rm = FALSE, method = "PMM")
+stats = rbind(stats, pmm_stats)
+stats
 ```
+
+With all our single imputation methods now performed we can begin our comparative
+analysis. We note that the standard error on the mean for all these single imputation 
+methods is too low. This is because the imputed values are implicitly treated as
+part of the complete dataset. We therefore overexaggerate our confidence in our
+estimates of the mean which corresponds to a lower standard error to be observed
+than what is appropriate. The additional uncertainty created due to sampling 
+the complete data is completely ignored using these single imputation methods.
+
+First comparing complete case analysis (CCA) and mean imputation (MI), 
+we see both estimates produce the same mean but the standard error for MI is 
+significantly lower due to the reason outlined previously. This notion pertains
+its veracity for all the following single imputation methods discussed. It also interesting
+to note the attenuation in the `cor_dose` variable. This is due to the fact that
+when MI is performed, all the imputed values lie on a horizontal line hence reducing
+the correlation between recovery time and the dosage of the drug administered.
+This effect is damped for the case of blood pressure and recovery time since there 
+doesn't seem to be a correlation between these two variables.
+
+The converse effect is observed for regression imputation (RI) as now
+all our imputed value lie on the regression line we constructed with our linear
+model which will artificially increase correlations between the variate and 
+covariates. Another downfall of this method is that it is very unrealistic since
+it is highly unlikely that all our missing values would lie upon the same regression line.
+RI therefore also reduces the realistic variability of the data.
+
+We attempt to remedy this effect in the hope to emulate the variability of the 
+real world by adding some noise to our regression line.
+This method is known as stochastic regression imputation (SRI) explains the decrease
+of `cor_dose` from 0.2801835 (RI) to 0.2566208 (SRI)
+
+Finally, the results presented by predictive mean matching (PMM) are indicative
+of a method which is a combination of the previous single imputation methods mentioned.
+
+Overall, SRI and PMM are the most robust single imputation methods used in this 
+analysis however it is not clear which methods imputations provide a dataset
+that is closest to the true underlying distribution. All we can say is that
+SRI and PMM will be more robust in a larger number of scenarios than CCA,
+MI and RI.
 
 # Question (4f)
 * **Description:** What is an advantage of predictive mean matching over stochastic 

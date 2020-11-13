@@ -187,7 +187,86 @@ alpha = 0.05
 z = qnorm(1-alpha/2)
 ```
 
+## Question 2
+Suppose that $Y_i \sim N(\mu, \sigma^2)$ are iid for $i=1,...,n$. Further suppose that now 
+observations are (left) censored if $Y_i < D$, for some known $D$ and let
 
+\begin{equation*}
+X_i=
+\begin{cases}
+Y_i \quad if \; Y_i \geq D,\\
+D \quad if \; Y_i < D, 
+\end{cases}
+\quad
+R_i=
+\begin{cases}
+1 \quad if \; Y_i \geq D\\
+0 \quad if \; Y_i < D
+\end{cases}
+\end{equation*}
+
+### Question 2a
+Show that the log-likelihood of the observed data
+$\{x_i,r_i\}_{i=1}^n$ is given by
+
+\vspace{-5mm} 
+\begin{equation*}
+l(\mu, \sigma^2|\boldsymbol{x}, \boldsymbol{r}) = \sum_{i=1}^n\left\{r_i\log\phi(x_i; \mu, \sigma^2) + (1-r_i)\log\Phi(x_i;\mu, \sigma^2)\right\}
+\end{equation*}
+
+where $\phi(x_i;\mu,\sigma^2)$ and $\Phi(x_i;\mu, \sigma^2)$ stands, respectively, for the density function
+and cumulative distribution function of the normal distribution with mean $\mu$ and variance $\sigma^2$.
+
+**Solution:**
+
+* Similar to 1a, our likelihood function has two contributions:
+
+  1. $\phi(x_i;\mu, \sigma^2)$ from *non-censored* observations.
+
+  2. $Pr(X_i < D ; \mu, \sigma^2) = S(D;\mu, \sigma^2) = 1 -\Phi(x_i;\mu, \sigma^2)$ from *censored* observations.
+  
+* All observations $X_i, ..., X_n$ are iid, hence,
+
+\vspace{-10mm}
+\begin{align*}
+l(\mu, \sigma^2|\boldsymbol{x}, \boldsymbol{r})&=\log \prod_{i=1}^{n}\left\{\phi(x_i;\mu,\sigma^2)]^{r_i}[1 -\Phi(x_i;\mu, \sigma^2)]^{1-r_i}\right\}\\
+&= \log \left\{\phi(x_i;\mu,\sigma^2)]^{\sum_i r_i}[1 -\Phi(x_i;\mu, \sigma^2)]^{\sum_i(1-r_i)}\right\}\\
+&=  \sum_{i=1}^n\left\{r_i\log\phi(x_i; \mu, \sigma^2) + (1-r_i)\log\Phi(x_i;\mu, \sigma^2)\right\}
+\end{align*}
+
+* Note that we have made use of the fact that $\log (1) = 0$.
+
+### Question 2b
+Determine the maximum likelihood estimate of $\mu$ based on the data available
+in the file dataex2.Rdata. Consider $\sigma^2$ known and equal to $1.5^2$.
+
+**Solution:**
+
+* $\widehat{\mu}_{\text{MLE}} = 5.5328$ to 4 d.p.
+
+```{r ex2, message=FALSE, warning=FALSE}
+library(maxLik)
+# Loading in data
+load('dataex2.Rdata')
+
+# Log likelihood function set to maximized
+get_log_likelihood = function(param, data) {
+  mu = param
+  x = data[,1]; r = data[,2]
+  return(sum(r*dnorm(x, mean=mu, sd=1.5, log=TRUE) + 
+               (1 - r)*pnorm(x, mean=mu, sd=1.5, log.p=TRUE)))
+}
+# Get MLE
+mle = maxLik(logLik = get_log_likelihood, data = dataex2, start = c(mu=1))
+# Present results
+summary(mle)
+```
+
+
+
+
+
+ 
 
 
 

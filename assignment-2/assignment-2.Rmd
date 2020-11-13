@@ -262,7 +262,52 @@ mle = maxLik(logLik = get_log_likelihood, data = dataex2, start = c(mu=1))
 summary(mle)
 ```
 
+\newpage
 
+## Question 3
+Consider a bivariate normal sample $(Y_1, Y_2)$ with parameters $\theta=(\mu_1,\mu_2,\sigma_1^2,\sigma_{12},\sigma_2^2)$ The
+variable $Y_1$ is fully observed, while some values of $Y_2$ are missing. Let $R$ be the missingness
+indicator, taking the value 1 for observed values and 0 for missing values. For the following
+missing data mechanisms state, justifying, whether they are ignorable for likelihood-based
+estimation.
+
+**Solution:** 
+
+* A missing data mechanism (MDM) is said to be ignorable for likelihood based inference if 
+and only if the following two criteria are met:
+
+  1. The missing data are missing at random (MAR) or missing completely at random (MCAR).
+  
+  2. The parameter $\psi$ (missingness mechanism) and $\theta$ (data model) are distinct
+  in the sense that the joint parameter space of $(\psi, \theta)$ is the product of the
+  parameter spaces $\Psi$ and $\Theta$ (separability condition).
+  
+* The three missing data mechanisms presented below all meet criterion 2 hence
+we simply need to justify whether the data caused to be missing by each mechanism 
+meets criterion 1.
+
+
+(a) $logit \left\{Pr(R=0|y_1,y_2,\theta,\psi)\right\} = \psi_0 + \psi_1y_1; \quad \psi = (\psi_1,\psi_2)$ distinct from $\theta$.
+
+*  We observe that the MDM is dependent on the fully observed variable, $y_1$, only.
+The missing data resulting from this mechanism will hence be MAR indicating MDM (a)
+is ignorable for likelihood-based estimation.
+
+(b) $logit \left\{Pr(R=0|y_1,y_2,\theta,\psi)\right\} = \psi_0 + \psi_1y_2; \quad \psi = (\psi_1,\psi_2)$ distinct from $\theta$.
+
+* We observe that the MDM is dependent on the missing variable, $y_2$, only.
+The missing data resulting from this mechanism will hence be MNAR indicating MDM (b)
+is **NOT** ignorable for likelihood-based estimation.
+
+(c) $logit \left\{Pr(R=0|y_1,y_2,\theta,\psi)\right\} = 0.5(\mu_1 + \psi_1y_1); \quad  \psi$ (scalar) distinct from $\theta$.
+
+* We observe a similar MDM to (a) with an added dependency on $\mu_1$. Whether the data
+are MAR or MNAR now depends on whether $\sigma_{12}$ is equal to 0. In the case where
+$\sigma_{12}$ is equal to 0, $Y_1$ and $Y_2$ would be independent variables and hence
+the missing data from the MDM would be MAR rendering the MDM ignorable for likelihood-based estimation.
+In the case where $\sigma_{12}$ is **NOT** equal to 0, $Y_1$ and $Y_2$ would be dependent variables 
+meaning $\mu_1$ would have some $Y_2$ dependency rendering the data from the MDM MNAR.
+We would then be unable to rule out the MDM for likelihood-based estimation.
 
 
 

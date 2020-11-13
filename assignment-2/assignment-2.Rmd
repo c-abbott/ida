@@ -1,0 +1,205 @@
+---
+title: |
+  <center> Incomplete Data Analysis </center>
+  <center> Assignment 2 </center>
+author: "<center> Callum Abbott </center>"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+  word_document: default
+---
+\fontsize{12}{20}
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+## Question 1
+Suppose $Y_1, . . . , Y_n$ are independent and identically distributed with cumulative 
+distribution function given by
+\begin{equation*}
+F(y;\theta) = 1 - e^{-y^2/(2\theta)}, \quad y \geq 0, \theta > 0
+\end{equation*}
+Further suppose that observations are (right) censored if $Y_i > C$, for some known $C > 0$,
+and let
+\begin{equation*}
+X_i=
+\begin{cases}
+Y_i \quad if \; Y_i \leq C,\\
+C \quad if \; Y_i > C, 
+\end{cases}
+\quad
+R_i=
+\begin{cases}
+1 \quad if \; Y_i \leq C\\
+0 \quad if \; Y_i > C 
+\end{cases}
+\end{equation*}
+
+### Question 1a
+Show that the maximum likelihood estimator based on the observed data
+$\{x_i,r_i\}_{i=1}^n$ is given by
+\begin{equation*}
+\hat{\theta} = \frac{\sum_{i=1}^n X_i^2}{2\sum_{i=1}^nR_i}
+\end{equation*}
+
+**Solution:**
+
+* To derive the MLE we must maximize the log-likelihood of the observed data $\{x_i,r_i\}_{i=1}^n$.
+In this context, there are two contributions to the likelihood function:
+
+  1. $f(y_i;\theta) = dF(y_i;\theta)/dy_i$ from *non-censored* observations.
+
+  2. $Pr(Y_i > C ; \theta) = S(C;\theta) = 1 -F(y_i;\theta)$ from *censored* observations.
+  
+* All observations $Y_i, ..., Y_n$ are iid, hence,
+
+\vspace{-10mm}
+\begin{align*}
+L(\theta)&=\prod_{i=1}^{n}\left\{[f(y_i;\theta)]^{r_i}[S(C;\theta)]^{1-r_i}\right\}\\
+&=\prod_{i=1}^{n}\left\{\left[\frac{y_i}{\theta} e^{-y_i^2/2\theta}\right]^{r_i}\left[e^{-C^2/2\theta}\right]^{1-r_i}\right\}\\
+&=\left(\frac{y_i}{2\theta}\right)^{\sum_ir_i}exp\left(-\frac{1}{2\theta}\sum_i[r_iy_i^2 + (1-r_i)C^2]\right)\\
+&=\left(\frac{y_i}{2\theta}\right)^{\sum_ir_i}exp\left(-\frac{1}{2\theta}\sum_ix_i^2\right)
+\end{align*}
+
+* Note that in order to understand how one goes from line 3 to line 4 in the equation
+defined above, we recall that we can write the variable $X_i$ as $X_i = Y_iR_i + C(1-R_i)\\$
+and due to the binary nature of $R_i$:
+
+\vspace{-10mm}
+\begin{align*}
+&\implies X_i^2 = Y_i^2R_i^2 + C^2(1-R_i)^2 + 2Y_iR_iC(1-R_i)\\
+&\implies X_i^2 = Y_i^2R_i + C^2(1-R_i)
+\end{align*}
+
+* We can now define the log-likelihood to be
+
+\vspace{-10mm}
+\begin{align*}
+\log L(\theta) := l(\theta) = \sum_{i=1}^nr_i\log\left(\frac{y_i}{2\theta}\right) - \frac{1}{2\theta}\sum_{i=1}^nx_i^2
+\end{align*}
+
+* Maximising this quantity through taking its derivative  
+
+\vspace{-7.5mm}
+\begin{equation*}
+\frac{\text{d}}{\text{d}\theta}l(\theta)=-\frac{\sum_{i=1}^{n}r_i}{\theta} + \frac{\sum_{i=1}^{n}x_i^2}{2\theta^2}
+\end{equation*}
+
+* leading to
+
+\vspace{-10mm}
+\begin{equation*}
+\widehat{\theta}_{\text{MLE}}=\frac{\sum_{i=1}^{n}X_i^2}{2\sum_{i=1}^{n} R_i}.
+\end{equation*}
+
+* Note that we have assumed here that $\widehat{\theta}_{\text{MLE}}$ is indeed a maximum
+and have not computed the second derivative since our result matches the one given
+in the question.
+
+### Question 1b
+Show that the expected Fisher information for the observed data likelihood
+is
+
+\begin{equation*}
+I(\theta) = \frac{n}{\theta^2}(1 - e^{-C^2/2\theta})
+\end{equation*}
+
+**Note:** $\int_0^Cy^2f(y;\theta)dy = -C^2e^{-C^2/2\theta} + 2\theta(1-e^{-C^2/2\theta})$,
+where $f(y;\theta)$ is the density function corresponding to the cumulative distribution function
+$F(y;\theta)$ defined above.
+
+\vspace{5mm}
+**Solution:**
+
+* We first recall the general definition of the expected Fisher information to be
+
+\vspace{-5mm}
+\begin{equation*}
+I(\theta) = -E\left[\frac{d^2l(\theta)}{d\theta^2}\right]
+\end{equation*}
+
+* We now compute the second derivative of the log-likelihood and re-introduce the
+variables $r_i$ and $y_i$ for $x_i$ which will allow us to take expectations more clearly.
+This yields,
+
+\begin{equation*}
+I(\theta) = -\frac{\sum_i E[R_i]}{\theta^2} + \frac{\sum_i E[R_iY_i^2]}{\theta^3} + \frac{\sum_iC^2E[(1-R_i)]}{\theta^3} 
+\end{equation*}
+
+\newpage
+
+* Note that $R$ is a binary random variable and so
+
+\vspace{-10mm}
+\begin{align*}
+E(R)&=1\times\Pr(R=1)+0\times\Pr(R=0)\\
+&=\Pr(R=1)\\
+&=\Pr(Y\leq C)\\
+&=F(C;\theta)\\
+&=1-e^{-C^2/2\theta}.
+\end{align*}
+
+* And hence
+
+\vspace{-10mm}
+\begin{align*}
+I(\theta) &= -\frac{\sum_i E[R_i]}{\theta^2} + \frac{\sum_i E[R_iY_i^2]}{\theta^3} + \frac{\sum_iC^2E[(1-R_i)]}{\theta^3} \\
+&= -\frac{n}{\theta^2}(1-e^{C^2/2\theta}) + \frac{n}{\theta^3}\left\{-C^2e^{-C^2/2\theta} + 2\theta(1-e^{-C^2/2\theta})\right\} + \frac{n}{\theta^3}e^{-C^2/2\theta}\\
+&= \frac{n}{\theta^2}(1 - e^{-C^2/2\theta})
+\end{align*}
+
+### Question 1c
+Appealing to the asymptotic normality of the maximum likelihood estimator, 
+provide a $95\%$ confidence interval for $\theta$.
+
+**Solution:**
+
+* We recall the asymptotic normality of the MLE as
+
+\vspace{-5mm}
+\begin{equation*}
+\widehat{\theta}_{\text{MLE}} \sim N(\theta, I(\theta)^{-1})
+\end{equation*}
+
+* Therefore
+
+\vspace{-5mm}
+\begin{equation*}
+\frac{\widehat{\theta}_{\text{MLE}}-\theta}{\sqrt{I(\theta)^{-1}}} \sim N(0, 1)
+\end{equation*}
+
+* Using the properties of the standard Gaussian distribution ($\alpha = 0.05$)
+
+\vspace{-5mm}
+\begin{align*}
+Pr\left(z_{-\alpha/2} \leq \frac{\widehat{\theta}_{\text{MLE}}-\theta}{\sqrt{I(\theta)^{-1}}} \leq z_{\alpha/2}\right) = 1-\alpha = 0.95
+\end{align*}
+
+
+* The $95\%$ CI for $\widehat{\theta}_{\text{MLE}}$ is hence
+$\left[\sqrt{I(\theta)^{-1}}z_{-\alpha/2} + \theta, \sqrt{I(\theta)^{-1}}z_{\alpha/2} + \theta\right]$
+where $z_{\alpha/2} = 1.959964$, $z_{-\alpha/2} = -1.959964$,
+and $\sqrt{I(\theta)^{-1}} = \theta/\sqrt{n(1 - e^{-C^2/2\theta})}$ 
+
+
+```{r}
+alpha = 0.05
+z = qnorm(1-alpha/2)
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

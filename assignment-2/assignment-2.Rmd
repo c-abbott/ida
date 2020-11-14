@@ -9,7 +9,7 @@ output:
     df_print: paged
   word_document: default
 ---
-\fontsize{12}{20}
+\fontsize{10}{20}
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -17,7 +17,7 @@ knitr::opts_chunk$set(echo = TRUE)
 Suppose $Y_1, . . . , Y_n$ are independent and identically distributed with cumulative 
 distribution function given by
 \begin{equation*}
-F(y;\theta) = 1 - e^{-y^2/(2\theta)}, \quad y \geq 0, \theta > 0
+F(y;\theta) = 1 - e^{-y^2/(2\theta)}, \quad y \geq 0, \; \theta > 0
 \end{equation*}
 Further suppose that observations are (right) censored if $Y_i > C$, for some known $C > 0$,
 and let
@@ -309,8 +309,111 @@ In the case where $\sigma_{12}$ is **NOT** equal to 0, $Y_1$ and $Y_2$ would be 
 meaning $\mu_1$ would have some $Y_2$ dependency rendering the data from the MDM MNAR.
 We would then be unable to rule out the MDM for likelihood-based estimation.
 
+\newpage
+
+## Question 4
+Suppose that
+
+\vspace{-10mm}
+\begin{align*}
+Y_i &\overset{\text{ind}}{\sim} \text{Bernoulli}(p_i(\boldsymbol{\beta}),\\
+p_i(\boldsymbol{\beta}) &= \frac{exp(\beta_0 + x_i\beta_1)}{1+exp(\beta_0+x_i\beta_1)}
+\end{align*}
+
+for $i=1,...,n$ and $\boldsymbol{\beta} = (\beta_0, \beta_1)'$. Although the covariate $x$
+is fully observed, the response variable $Y$ has missing values. Assuming ignorability, derive
+and implement the EM algorithm to compute the MLE of $\boldsymbol{\beta}$ based on the data
+available in `dataex4.Rdata`. 
+
+**Solution:**
+
+* We begin by first obtaining the likelihood for $\boldsymbol{\beta}$ which
+is given by
+
+\vspace{-10mm}
+\begin{align*}
+L(\boldsymbol{\beta})&=\prod_{i=1}^{n}\{p_i(\boldsymbol{\beta})^{y_i}[1-p_i(\boldsymbol{\beta})]^{1-y_i}\}\\
+&=\prod_{i=1}^{n}\left\{\left(\frac{e^{\beta_0+x_i\beta_1}}{1+e^{\beta_0+x_i\beta_1}}\right)^{y_i}\left(\frac{1}{1+e^{\beta_0+x_i\beta_1} }\right)^{1-y_i}\right\}.
+\end{align*}
+
+The corresponding log likelihood is hence
+
+\vspace{-7.5mm}
+\begin{align*}
+l(\boldsymbol{\beta})&=\sum_{i=1}^{n}\left\{y_i\log\left(\frac{e^{\beta_0+x_i\beta_1}}{1+e^{\beta_0+x_i\beta_1}}\right)+(1-y_i)\log\left( \frac{1}{1+e^{\beta_0+x_i\beta_1}}\right)\right\}\\
+&=\sum_{i=1}^{n}\{y_i(\beta_0+x_i\beta_1)-\log(1+e^{\beta_0+x_i\beta_1})\}.
+\end{align*}
+
+* Now that we are in possession of the log-likelihood, we can use this to conduct the
+expectation step of the EM algorithm and define our $Q$ function.
+
+* Note that the expectation is taken under the distribution of the **missing data**. We 
+hence make use of our univariate pattern of missingness and assume that the first
+$m$ values of $Y$ are reserved and the remaining $n-m$ are missing i.e.
+$\boldsymbol{y_{obs}} = y_1,...,y_m$ and $\boldsymbol{y_{mis}} = y_m+1,...,y_n$.
+
+\vspace{-10mm}
+\begin{align*}
+  Q(\boldsymbol{\beta}|\boldsymbol{\beta^{(t)}}) &= E_{\boldsymbol{y_{mis}}}\left[l(\boldsymbol{\beta})|\boldsymbol{y_{obs}}, \boldsymbol{x}, \boldsymbol{\beta^{(t)}}\right]\\
+  &=\sum_{i=1}^m\left\{y_i(\beta_0 + \beta_1x_i)\right\} - \sum_{i=1}^n\log(1+e^{\beta_0 + \beta_1x_i}) + 
+  \sum_{i=m+1}^n(\beta_0 + \beta_1x_i) E_{\boldsymbol{y_{mis}}}[y_i|\boldsymbol{y_{obs}}, \boldsymbol{x}, \boldsymbol{\beta^{(t)}}]\\
+  &=\sum_{i=1}^m\left\{y_i(\beta_0 + \beta_1x_i)\right\} - \sum_{i=1}^n\log(1+e^{\beta_0 + \beta_1x_i}) + 
+  \sum_{i=m+1}^n(\beta_0 + \beta_1x_i)p_i(\boldsymbol{\beta})
+\end{align*}
+
+* Where we have used the result that $E[Y_i] = p_i(\boldsymbol{\beta})$ since $Y_i \overset{\text{ind}}{\sim} \text{Bernoulli}\{(p_i(\boldsymbol{\beta})\}$. We remind the reader of the definition of  $p_i(\boldsymbol{\beta})$
+is $p_i(\boldsymbol{\beta}) = \frac{exp(\beta_0 + x_i\beta_1)}{1+exp(\beta_0+x_i\beta_1)}$ as defined in the question.
+
+* Following our definition of the Q function, we conduct the maximization step of the EM algorithm
+and maximize this function with respect to the parameters, $\boldsymbol{\beta} = (\beta_0, \beta_1)'$. 
+
+* The R code below presents our results where we yield values of $\beta_0 =  0.7636$ to 4 d.p and
+$\beta_1 =  -4.1510$ to 4 d.p as our MLEs.
 
 
+```{r ex4, message=FALSE, warning=FALSE}
+# Loading relevant packages
+library(maxLik)
+library(dplyr)
+library(tidyr)
+library(magrittr)
+
+# Loading data
+load('dataex4.Rdata')
+
+dataex4 = dataex4 %>%
+  # Sorting data in ascending order in column Y (0 -> 1 -> NA)
+  arrange(Y) %>%
+  # Creating indicator variable column (if Y == NA -> R = 0, else -> R = 1)
+  mutate(R = (Y == 0 | Y == 1)*1) %>%
+  # Replacing NAs with 0s in R column
+  tidyr::replace_na(list(R = 0)) %>%
+  # Replacing NAs with 2s in Y column to prevent coercion problems i.e. 0*NA=NA
+  tidyr::replace_na((list(Y = 2)))
+
+# Sigmoid probability function  
+prob = function(beta0, beta1, x) {
+  return(exp(beta0 + x*beta1) / (1 + exp(beta0 + x*beta1)))
+}
+
+# Defining Q function for EM algorithm
+q_function = function(params, data){
+  beta0 = params[1]; beta1 = params[2]
+  xx = data$X
+  yy = data$Y
+  rr = data$R
+  sum(yy*rr*(beta0 + beta1*xx) - log(1 + exp(beta0 + beta1*xx)) + 
+        (1 - rr)*(beta0 + beta1*xx)*prob(beta0, beta1, xx))
+}
+
+# Get MLE
+mle_q = maxLik(q_function, data = dataex4, start = c(beta0=1, beta1=1))
+# Present results
+summary(mle_q)
+```
+
+
+ 
  
 
 

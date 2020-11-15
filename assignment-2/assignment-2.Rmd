@@ -4,9 +4,9 @@ title: |
   <center> Assignment 2 </center>
 author: "<center> Callum Abbott </center>"
 output:
+  pdf_document: default
   html_document:
     df_print: paged
-  pdf_document: default
   word_document: default
 ---
 \fontsize{10}{20}
@@ -431,11 +431,99 @@ with
   f_{\text{Exp}}(y;\lambda) &= \lambda e^{-\lambda y}, \quad y \geq 0, \quad \lambda > 0
 \end{align*}
 
-and $\theta = (p, \mu, \sigma^2, \lambda)$
+and $\boldsymbol{\theta} = (p, \mu, \sigma^2, \lambda)$
 
 ### Question 5a
 
-Derive the EM algorithm to find the updating equations for $\theta^{(t+1)} = (p^{(t+1)}, \mu^{(t+1)}, (\sigma^{(t+1)})^2, \lambda^{(t+1)})$.
+Derive the EM algorithm to find the updating equations for $\boldsymbol{\theta^{(t+1)}} = (p^{(t+1)}, \mu^{(t+1)}, (\sigma^{(t+1)})^2, \lambda^{(t+1)})$.
+
+**Solution:**
+
+* We begin by taking our mixture model and computing the likelihood:
+
+\vspace{-5mm}
+\begin{equation*}
+  L(\boldsymbol{\theta}; y) = \prod_{i=1}^n\left\{pf_{\text{logNormal}}(y_i;\mu, \sigma^2) + (1-p)f_{\text{Exp}}(y_i;\lambda)\right\}
+\end{equation*}
+
+* The log likelihood is hence
+
+\vspace{-5mm}
+\begin{equation*}
+  l(\boldsymbol{\theta}; y) = \sum_{i=1}^n\log\left\{pf_{\text{logNormal}}(y_i;\mu, \sigma^2) + (1-p)f_{\text{Exp}}(y_i;\lambda)\right\}
+\end{equation*}
+
+* The combination of the summation and logarithm make it very difficult to maximize this log-likelihood. We hence turn to the EM algorithm for this computation, but first, we must artificially create *missing data* in order to implement it.
+
+* The idea that enables us to implement the EM algorithm is that if we knew the group the observation $y_i$ belonged to, then we could fit the appropriate distribution (log-normal or exponential).
+
+* Let us define $\boldsymbol{y_{\text{obs}}} = (y_1,...,y_n)$ and $\boldsymbol{y_{\text{mis}}} = \boldsymbol{z} = (z_1,...,z_n)$ where $Z_i \sim \text{Bernoulli}(p)$ and hence
+
+\begin{equation*}
+Z_i=
+\begin{cases}
+1 \quad \text{if} \; Y_i \; \text{belongs to} \; f_{\text{logNormal}}(y_i;\mu, \sigma^2)  \\
+0 \quad \text{if} \; Y_i \; \text{belongs to} \; f_{\text{Exp}}(y_i;\lambda)
+\end{cases}
+\end{equation*}
+
+* Re-writing our log-likelihood in terms of $\boldsymbol{z}$
+
+\vspace{-5mm}
+\begin{equation*}
+  l(\boldsymbol{\theta}; y, \boldsymbol{z}) = \sum_{i=1}^nz_i\left\{\log p + \log f_{\text{logNormal}}(y_i;\mu, \sigma^2)\right\} +  \sum_{i=1}^n(1-z_i)\left\{\log (1-p) + \log f_{\text{Exp}}(y_i;\lambda)\right\}
+\end{equation*}
+
+* With our log-likelihood and artificial missing data in hand we can now define our Q function to be:
+
+\vspace{-10mm}
+\begin{align*}
+Q(\boldsymbol{\theta}|\boldsymbol{\theta^{(t)}}) &=
+\mathbb{E}_{\boldsymbol{z}}\left[l(\boldsymbol{\theta}; y, \boldsymbol{z})\right]\\
+&= \sum_{i=1}^n\mathbb{E}[\boldsymbol{z}|\boldsymbol{y}, \boldsymbol{\theta}^{(t)}]\left\{\log p + \log f_{\text{logNormal}}(y_i;\mu, \sigma^2)\right\} +  \sum_{i=1}^n(1-\mathbb{E}[\boldsymbol{z}|\boldsymbol{y}, \boldsymbol{\theta}^{(t)}])\left\{\log (1-p) + \log f_{\text{Exp}}(y_i;\lambda)\right\}
+\end{align*}
+
+* Taking the relevant expectation
+
+\vspace{-5mm}
+\begin{align*}
+\mathbb{E}[\boldsymbol{z}|\boldsymbol{y},\boldsymbol{\theta}^{(t)}] &= \mathbb{E}[z_i|\boldsymbol{y},\boldsymbol{\theta}^{(t)}]\\ 
+  &= \text{Pr}(z_i=1|y_i,\boldsymbol{\theta}^{(t)})\\
+  &=\frac{p_i^{(t)}f_{\text{logNormal}}(y_;\mu, \sigma^2)}{p_i^{(t)}f_{\text{logNormal}}(y_;\mu, \sigma^2) + (1-p_i^{(t)})f_{\text{Exp}}(y_i;\lambda)}\\ &:= \tilde{p}_i^{(t)}
+\end{align*}
+
+* We hence define our Q function to be
+
+\vspace{-5mm}
+\begin{equation*}
+Q(\boldsymbol{\theta}|\boldsymbol{\theta^{(t)}}) 
+= \sum_{i=1}^n \tilde{p}_i^{(t)}\left\{\log p + \log f_{\text{logNormal}}(y_i;\mu, \sigma^2)\right\} +  \sum_{i=1}^n(1- \tilde{p}_i^{(t)})\left\{\log (1-p) + \log f_{\text{Exp}}(y_i;\lambda)\right\}
+\end{equation*}
+
+* With the Q function defined above, we can analytically maximize this function in order to find $\boldsymbol{\theta}^{(t+1)}$. Taking the derviative of the Q function with respect to all our parameters yields
+
+\vspace{-10mm}
+\begin{align*}
+\frac{\partial Q(\boldsymbol{\theta}|\boldsymbol{\theta^{(t)}})}{\partial p} &= \frac{1}{p}\sum_{i=1}^n\tilde{p}_i^{(t)} - \frac{1}{(1-p)}\sum_{i=1}^n(1-\tilde{p}_i^{(t)})\\
+\frac{\partial Q(\boldsymbol{\theta}|\boldsymbol{\theta^{(t)}})}{\partial \mu} &= \sum_{i=1}^n\tilde{p}_i^{(t)}\left\{\frac{\log y_i - \mu}{\sigma^2}\right\}\\
+\frac{\partial Q(\boldsymbol{\theta}|\boldsymbol{\theta^{(t)}})}{\partial \sigma^2} &=
+\sum_{i=1}^n\tilde{p}_i^{(t)}\left\{\frac{(\log y_i - \mu)^2}{2\sigma^4} - \frac{1}{2\sigma^2}\right\}\\
+\frac{\partial Q(\boldsymbol{\theta}|\boldsymbol{\theta^{(t)}})}{\partial \lambda} &=
+\sum_{i=1}^n(1-\tilde{p}_i^{(t)})\left\{\frac{1}{\lambda} - y_i\right\}
+\end{align*}
+
+* Setting the each derivative defined above to zero and solving for each parameter in $\boldsymbol{\theta}$ at iteration $t+1$ we yield the following update equations
+
+\vspace{-10mm}
+\begin{align*}
+p^{(t+1)} &= \frac{1}{n}\sum_{i=1}^n\tilde{p}_i^{(t)}\\
+\mu^{(t+1)} &= \frac{\sum_{i=1}^n\tilde{p}_i^{(t)}\log y_i}{\sum_{i=1}^n\tilde{p}_i^{(t)}}\\
+\left(\sigma^{(t+1)}\right)^2 &= \frac{\sum_{i=1}^n\tilde{p}_i^{(t)}(\log y_i - \mu^{(t+1)})^2}{\sum_{i=1}^n\tilde{p}_i^{(t)}}\\
+\lambda^{(t+1)} &= \frac{\sum_{i=1}^n(1-\tilde{p}_i^{(t)})}{\sum_{i=1}^n(1-\tilde{p}_i^{(t)})y_i}
+\end{align*}
+
+
+
 
 
 ### Question 5b

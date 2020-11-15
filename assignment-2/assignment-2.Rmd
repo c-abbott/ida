@@ -4,9 +4,9 @@ title: |
   <center> Assignment 2 </center>
 author: "<center> Callum Abbott </center>"
 output:
-  pdf_document: default
   html_document:
     df_print: paged
+  pdf_document: default
   word_document: default
 ---
 \fontsize{10}{20}
@@ -115,7 +115,7 @@ $F(y;\theta)$ defined above.
 
 \vspace{-5mm}
 \begin{equation*}
-I(\theta) = -E\left[\frac{d^2l(\theta)}{d\theta^2}\right]
+I(\theta) = -\mathbb{E}\left[\frac{d^2l(\theta)}{d\theta^2}\right]
 \end{equation*}
 
 * We now compute the second derivative of the log-likelihood and re-introduce the
@@ -123,7 +123,7 @@ variables $r_i$ and $y_i$ for $x_i$ which will allow us to take expectations mor
 This yields,
 
 \begin{equation*}
-I(\theta) = -\frac{\sum_i E[R_i]}{\theta^2} + \frac{\sum_i E[R_iY_i^2]}{\theta^3} + \frac{\sum_iC^2E[(1-R_i)]}{\theta^3} 
+I(\theta) = -\frac{\sum_i \mathbb{E}[R_i]}{\theta^2} + \frac{\sum_i \mathbb{E}[R_iY_i^2]}{\theta^3} + \frac{\sum_iC^2\mathbb{E}[(1-R_i)]}{\theta^3} 
 \end{equation*}
 
 \newpage
@@ -132,7 +132,7 @@ I(\theta) = -\frac{\sum_i E[R_i]}{\theta^2} + \frac{\sum_i E[R_iY_i^2]}{\theta^3
 
 \vspace{-10mm}
 \begin{align*}
-E(R)&=1\times\Pr(R=1)+0\times\Pr(R=0)\\
+\mathbb{E}[R]&=1\times\Pr(R=1)+0\times\Pr(R=0)\\
 &=\Pr(R=1)\\
 &=\Pr(Y\leq C)\\
 &=F(C;\theta)\\
@@ -143,7 +143,7 @@ E(R)&=1\times\Pr(R=1)+0\times\Pr(R=0)\\
 
 \vspace{-10mm}
 \begin{align*}
-I(\theta) &= -\frac{\sum_i E[R_i]}{\theta^2} + \frac{\sum_i E[R_iY_i^2]}{\theta^3} + \frac{\sum_iC^2E[(1-R_i)]}{\theta^3} \\
+I(\theta) &= -\frac{\sum_i \mathbb{E}[R_i]}{\theta^2} + \frac{\sum_i \mathbb{E}[R_iY_i^2]}{\theta^3} + \frac{\sum_iC^2\mathbb{E}[(1-R_i)]}{\theta^3} \\
 &= -\frac{n}{\theta^2}(1-e^{C^2/2\theta}) + \frac{n}{\theta^3}\left\{-C^2e^{-C^2/2\theta} + 2\theta(1-e^{-C^2/2\theta})\right\} + \frac{n}{\theta^3}e^{-C^2/2\theta}\\
 &= \frac{n}{\theta^2}(1 - e^{-C^2/2\theta})
 \end{align*}
@@ -354,14 +354,14 @@ $\boldsymbol{y_{obs}} = y_1,...,y_m$ and $\boldsymbol{y_{mis}} = y_m+1,...,y_n$.
 
 \vspace{-10mm}
 \begin{align*}
-  Q(\boldsymbol{\beta}|\boldsymbol{\beta^{(t)}}) &= E_{\boldsymbol{y_{mis}}}\left[l(\boldsymbol{\beta})|\boldsymbol{y_{obs}}, \boldsymbol{x}, \boldsymbol{\beta^{(t)}}\right]\\
+  Q(\boldsymbol{\beta}|\boldsymbol{\beta^{(t)}}) &= \mathbb{E}_{\boldsymbol{y_{mis}}}\left[l(\boldsymbol{\beta})|\boldsymbol{y_{obs}}, \boldsymbol{x}, \boldsymbol{\beta^{(t)}}\right]\\
   &=\sum_{i=1}^m\left\{y_i(\beta_0 + \beta_1x_i)\right\} - \sum_{i=1}^n\log(1+e^{\beta_0 + \beta_1x_i}) + 
-  \sum_{i=m+1}^n(\beta_0 + \beta_1x_i) E_{\boldsymbol{y_{mis}}}[y_i|\boldsymbol{y_{obs}}, \boldsymbol{x}, \boldsymbol{\beta^{(t)}}]\\
+  \sum_{i=m+1}^n(\beta_0 + \beta_1x_i) \mathbb{E}_{\boldsymbol{y_{mis}}}[y_i|\boldsymbol{y_{obs}}, \boldsymbol{x}, \boldsymbol{\beta^{(t)}}]\\
   &=\sum_{i=1}^m\left\{y_i(\beta_0 + \beta_1x_i)\right\} - \sum_{i=1}^n\log(1+e^{\beta_0 + \beta_1x_i}) + 
   \sum_{i=m+1}^n(\beta_0 + \beta_1x_i)p_i(\boldsymbol{\beta})
 \end{align*}
 
-* Where we have used the result that $E[Y_i] = p_i(\boldsymbol{\beta})$ since $Y_i \overset{\text{ind}}{\sim} \text{Bernoulli}\{(p_i(\boldsymbol{\beta})\}$. We remind the reader of the definition of  $p_i(\boldsymbol{\beta})$
+* Where we have used the result that $\mathbb{E}[Y_i] = p_i(\boldsymbol{\beta})$ since $Y_i \overset{\text{ind}}{\sim} \text{Bernoulli}\{(p_i(\boldsymbol{\beta})\}$. We remind the reader of the definition of  $p_i(\boldsymbol{\beta})$
 is $p_i(\boldsymbol{\beta}) = \frac{exp(\beta_0 + x_i\beta_1)}{1+exp(\beta_0+x_i\beta_1)}$ as defined in the question.
 
 * Following our definition of the Q function, we conduct the maximization step of the EM algorithm
@@ -413,20 +413,34 @@ summary(mle_q)
 ```
 
 
+\newpage
+
+## Question 5
+Consider a random sample $Y_1,...,Y_n$ from the mixture distribution with density 
  
- 
+\begin{equation*}
+  f(y) = pf_{\text{logNormal}}(y;\mu, \sigma^2) + (1-p)f_{\text{Exp}}(y;\lambda),
+\end{equation*}
+
+with
+
+\vspace{-10mm}
+\begin{align*}
+  f_{\text{logNormal}}(y;\mu, \sigma^2) &= \frac{1}{y\sqrt{2\pi\sigma^2}}\text{exp}\left\{\frac{1}{2\sigma^2}(\log y - \mu)^2\right\}, 
+  \quad y>0, \; \mu \in \mathbb{R}, \; \sigma > 0 \\
+  f_{\text{Exp}}(y;\lambda) &= \lambda e^{-\lambda y}, \quad y \geq 0, \quad \lambda > 0
+\end{align*}
+
+and $\theta = (p, \mu, \sigma^2, \lambda)$
+
+### Question 5a
+
+Derive the EM algorithm to find the updating equations for $\theta^{(t+1)} = (p^{(t+1)}, \mu^{(t+1)}, (\sigma^{(t+1)})^2, \lambda^{(t+1)})$.
 
 
-
-
-
-
-
-
-
-
-
-
-
-
+### Question 5b
+Using the dataset `datasetex5.Rdata` implement the EM algorithm and find the MLEs
+for each component of $\theta$. As starting values, you might want to consider
+$\theta^{(0)} = (p^{(0)}, \mu^{0)}, (\sigma^{(0)})^2, \lambda^{(0)}) = (0.1, 1, 0.5^2, 2)$.
+Draw the histogram of the data with the estimated density superimposed.
 

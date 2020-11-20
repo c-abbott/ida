@@ -13,6 +13,8 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+All code used for this assignment can be found in the following repository  [https://github.com/c-abbott/ida] under the folder `assignment-2`.
+
 ## Question 1
 Suppose $Y_1, . . . , Y_n$ are independent and identically distributed with cumulative 
 distribution function given by

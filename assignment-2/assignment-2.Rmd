@@ -243,7 +243,11 @@ in the file dataex2.Rdata. Consider $\sigma^2$ known and equal to $1.5^2$.
 
 **Solution:**
 
-* $\widehat{\mu}_{\text{MLE}} = 5.5328$ to 4 d.p.
+* Given that we are now in possession of the log-likelihood of our data, we proceed
+to maximize this with respect to the parameter $\mu$ in order to derive our MLE
+of this parameter which we denote $\widehat{\mu}_{\text{MLE}}$.
+
+* The Newton-Raphson method was used to optimise our log-likelihood which yielded the following MLE: $\widehat{\mu}_{\text{MLE}} = 5.5328$ to 4 d.p.
 
 ```{r ex2, message=FALSE, warning=FALSE}
 library(maxLik)
@@ -293,8 +297,7 @@ inference.
 (b) $logit \left\{Pr(R=0|y_1,y_2,\theta,\psi)\right\} = \psi_0 + \psi_1y_2; \quad \psi = (\psi_1,\psi_2)$ distinct from $\theta$.
 
 * We observe that the MDM is dependent on the missing variable, $y_2$, only.
-The missing data resulting from this mechanism will hence be MNAR indicating that MDM (b)
-is **NOT** ignorable for likelihood-based inference.
+The missing data resulting from this mechanism will hence be missing not at random (MNAR) indicating that MDM (b) is **NOT** ignorable for likelihood-based inference.
 
 (c) $logit \left\{Pr(R=0|y_1,y_2,\theta,\psi)\right\} = 0.5(\mu_1 + \psi_1y_1); \quad  \psi$ (scalar) distinct from $\theta$.
 
@@ -361,7 +364,18 @@ is $p_i(\boldsymbol{\beta}) = \frac{exp(\beta_0 + x_i\beta_1)}{1+exp(\beta_0+x_i
 * Following our definition of the Q function, we conduct the maximization step of the EM algorithm
 and maximize this function with respect to the parameters, $\boldsymbol{\beta} = (\beta_0, \beta_1)'$. 
 
-* The R code below presents our results where we yield values of $\widehat{\beta_0}_{\text{MLE}} =  0.9755$ to 4 d.p and $\widehat{\beta_1}_{\text{MLE}} =  -2.4804$ to 4 d.p as our MLEs for $\boldsymbol{\beta} = (\beta_0, \beta_1)'$.
+* The R code below repeatedly maximizes our Q function for every iteration of our
+algorithm in order to find subsequent values of the parameters considered.
+
+* This process is repeated until the following convergence criterion is met and we have
+our MLEs ($\epsilon = 1 \times 10^{-10}$):
+
+\vspace{-5mm}
+\begin{equation*}
+  |p^{(t+1)} - p^{(t)}|+|\mu^{(t+1)}-\mu^{(t)}|+|(\sigma^{(t+1)})^2 - (\sigma^{(t)})^2|+|\lambda^{(t+1)} - \lambda^{(t)}| < \epsilon
+\end{equation*}
+
+* At convergence, the following results are achieved for our MLEs: $\widehat{\beta_0}_{\text{MLE}} =  0.9755$ to 4 d.p and $\widehat{\beta_1}_{\text{MLE}} =  -2.4804$ to 4 d.p as our MLEs for $\boldsymbol{\beta} = (\beta_0, \beta_1)'$.
 
 
 ```{r ex4, message=FALSE, warning=FALSE}
@@ -533,7 +547,7 @@ Draw the histogram of the data with the estimated density superimposed.
 
 **Solution:**
 
-* Using the code defined below, we find the MLEs for each component of $\boldsymbol{\theta}$ to be (4 d.p):
+* Using the code defined below (see comments for details on implementation), we find the MLEs for each component of $\boldsymbol{\theta}$ to be (4 d.p):
 $\widehat{p}_{\text{MLE}} = 0.4795$;
 $\widehat{\mu}_{\text{MLE}} = 2.0133$; 
 $\widehat{\sigma^2}_{\text{MLE}} = 0.8637$; 
@@ -595,35 +609,22 @@ theta
 * We will now draw the histogram of the data with estimated density superimposed:
 
 ```{r ex5hist, message = FALSE, warning = FALSE}
-library(ggplot2)
-library(ggthemes)
+load('dataex5.Rdata')
 
 # Get params from MLE theta
 p = theta[[1]]; mu = theta[[2]]; sigma2 = theta[[3]]; lambda = theta[[4]]
 
-# Define density function observed in the question
-mixture_density = function(yy, p, mu, sigma2, lambda) {
-  p*dlnorm(yy, mu, sqrt(sigma2)) + (1-p)*dexp(yy, lambda)
-}
-
-# Plotting
-data = data.frame(dataex5)
-ggplot(data, aes(x = dataex5)) +
-  geom_histogram(aes(y = stat(density), fill = 'Histogram of dataex5')) +
-  geom_function(aes(color='Estimated Density'),
-                fun = mixture_density, args=list(p=p, mu=mu, sigma2=sigma2, lambda=lambda),
-                size=1.5) +
-  scale_x_continuous(name = "y", limits=c(0, 110)) + 
-  scale_y_continuous(name = "Probability Density", limits=c(0, 0.065)) +
-  ggtitle("Histogram of dataex5 and estimated density") + 
-  theme_bw() +
-  theme(plot.title = element_text(size = 14, face = "bold"),
-              axis.text.x=element_text(colour="black", size = 9),
-              axis.text.y=element_text(colour="black", size = 9),
-              legend.position = "bottom",
-              legend.title = element_blank()) + 
-  scale_colour_brewer(type='qual', palette=2) + 
-  scale_fill_brewer(type='qual', palette=3)
-
+# Histogram of data with estimated density superimposed
+hist(dataex5, breaks = 35, main="Random Sample from Mixture Distribution",
+  xlab = "y",
+  cex.main = 1.5,
+  col= "lightblue",
+  ylim= c(0,0.20),
+  freq = FALSE)
+  # Superimposing mixed density distribution
+  curve(p*dlnorm(x, meanlog = mu, sdlog= sqrt(sigma2)) + (1-p)*dexp(x, lambda),
+  add= TRUE, col= "red",lwd=1.5)
+  legend("topright", c("Histogram Data", "Mixed Distribution density"),
+  fill=c("lightblue", "red"))
 ```
 

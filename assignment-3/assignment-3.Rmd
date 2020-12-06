@@ -1,0 +1,25 @@
+---
+title: |
+  <center> Incomplete Data Analysis </center>
+  <center> Assignment 3 </center>
+author: "<center> Callum Abbott </center>"
+output:
+  pdf_document: default
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(include = FALSE)
+library(mice)
+library(rjags)
+library(JointAI)
+```
+All code used for this assignment can be found in the following repository [https://github.com/c-abbott/ida] under the folder `assignment-3`.
+
+## Question 1
+
+Consider the `nhanes` dataset in `mice`.
+
+### Question 1a
+(a) What percentage of the cases are incomplete?
+```{r}
+load('NHANES2.Rdata')
+```

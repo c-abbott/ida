@@ -1,25 +1,101 @@
 ---
 title: |
   <center> Incomplete Data Analysis </center>
-  <center> Assignment 3 </center>
+  <center> Assignment 2 </center>
 author: "<center> Callum Abbott </center>"
 output:
+  html_document: default
   pdf_document: default
 ---
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(include = FALSE)
 library(mice)
 library(rjags)
 library(JointAI)
 ```
+
 All code used for this assignment can be found in the following repository [https://github.com/c-abbott/ida] under the folder `assignment-3`.
 
 ## Question 1
-
 Consider the `nhanes` dataset in `mice`.
 
 ### Question 1a
-(a) What percentage of the cases are incomplete?
+*(a) What percentage of the cases are incomplete?*
+
+**Solution:**
+We observe the NHANES dataset has a total of $25$ cases, $12$ of which are
+incomplete. This gives the incomplete percentage as $48.0\%$ to $3$ significant figures.
+
+```{r echo=TRUE}
+# Load in dataset
+data(nhanes)
+# Calculate NA percentage
+na_percentage = sum(!complete.cases(nhanes)) / nrow(nhanes) * 100
+```
+
+### Question 1b
+*(b) Impute the data with `mice` using the defaults with `seed=1`, in step 2 predict*
+*`bmi` from `age`, `hyp`, and `chl` by the normal linear regression model, and then pool the*
+*results. What are the proportions of variance due to the missing data for each parameter?*
+*Which parameters appear to be most affected by the non-response?*
+
+**Solution:**
+Let *the proportions of variance due to the missing data for each parameter* be denoted
+as $\lambda$. Mathematically, we specify $\lambda$ to be:
+\begin{equation*}
+  \lambda = \frac{B + \frac{B}{M}}{V^{\text{MI}}}
+\end{equation*}
+
+where $B$ denotes the *between-imputation* variance, $M$ denotes the number of 
+imputed datasets by `mice` (default = 5) and $V^{\text{MI}}$ is the *total variance*.
+
+Using the standard MICE procedure - `mice(), with(), pool()` - we yield the following
+values for *the proportions of variance due to the missing data for each parameter* (3SF, seed=1):
+
+* `age` = 0.686
+* `hypten (yes)` = 0.350
+* `chol` = 0.304
+
+We observe that the variable `age` has the highest value of $\lambda$ indicating that
+this variable is most affected by the non-response.
+```{r echo=TRUE}
+imps = mice(nhanes, seed=1, printFlag=FALSE) # MI step
+fits = with(imps, glm(bmi ~ age + hyp + chl)) # Fitting lm to predict BMI
+bmi_ests = pool(fits) # Gather useful summary statistics
+summary(bmi_ests)
+```
+
+### Question 1c 
+*(c) Repeat the analysis for* `seed` $∈ {2,3,4,5,6}$. *Do the conclusions remain the same?*
+
+**Solution:**
+Repeating an analogous analysis but now varying the seeds to the values given above we
+yield different conclusions. For seeds 2, 3 and 6, the `age` variable had the largest
+value of $\lambda$ whilst the `chl` and `hyp` variables had the largest $\lambda$ values
+for seeds 4 and 5 respectively.
+
 ```{r}
-load('NHANES2.Rdata')
+bmi2 = pool(with(mice(nhanes, seed=2, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+bmi3 = pool(with(mice(nhanes, seed=3, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+bmi4 = pool(with(mice(nhanes, seed=4, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+bmi5 = pool(with(mice(nhanes, seed=5, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+bmi6 = pool(with(mice(nhanes, seed=6, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+```
+
+### Question 1d
+*(d) Repeat the analysis with M = 100 with the same seeds. Would you prefer*
+*these analyses over those with M = 5? Explain why.*
+
+**Solution:**
+These results indicate that our conclusions are effectively worthless and are simply due
+to random chance.
+
+```{r}
+mbmi1 = pool(with(mice(nhanes, seed=1, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+mbmi2 = pool(with(mice(nhanes, seed=2, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+mbmi3 = pool(with(mice(nhanes, seed=3, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+mbmi4 = pool(with(mice(nhanes, seed=4, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+mbmi5 = pool(with(mice(nhanes, seed=5, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+mbmi6 = pool(with(mice(nhanes, seed=6, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
 ```

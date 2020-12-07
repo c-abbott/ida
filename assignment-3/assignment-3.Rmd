@@ -8,11 +8,10 @@ output:
   pdf_document: default
 ---
 
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(include = FALSE)
+```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
+knitr::opts_chunk$set(eval = TRUE, echo = TRUE)
 library(mice)
 library(rjags)
-library(JointAI)
 ```
 
 All code used for this assignment can be found in the following repository [https://github.com/c-abbott/ida] under the folder `assignment-3`.
@@ -41,7 +40,9 @@ na_percentage = sum(!complete.cases(nhanes)) / nrow(nhanes) * 100
 *Which parameters appear to be most affected by the non-response?*
 
 **Solution:**
+
 Let *the proportions of variance due to the missing data for each parameter* be denoted
+
 as $\lambda$. Mathematically, we specify $\lambda$ to be:
 \begin{equation*}
   \lambda = \frac{B + \frac{B}{M}}{V^{\text{MI}}}
@@ -59,21 +60,24 @@ values for *the proportions of variance due to the missing data for each paramet
 
 We observe that the variable `age` has the highest value of $\lambda$ indicating that
 this variable is most affected by the non-response.
-```{r echo=TRUE}
+```{r}
 imps = mice(nhanes, seed=1, printFlag=FALSE) # MI step
 fits = with(imps, glm(bmi ~ age + hyp + chl)) # Fitting lm to predict BMI
 bmi_ests = pool(fits) # Gather useful summary statistics
-summary(bmi_ests)
+bmi_ests[,3][c(1, 3, 10)]
 ```
 
 ### Question 1c 
-*(c) Repeat the analysis for* `seed` $∈ {2,3,4,5,6}$. *Do the conclusions remain the same?*
+*(c) Repeat the analysis for* `seed` $\in {2,3,4,5,6}$. *Do the conclusions remain the same?*
 
 **Solution:**
 Repeating an analogous analysis but now varying the seeds to the values given above we
 yield different conclusions. For seeds 2, 3 and 6, the `age` variable had the largest
-value of $\lambda$ whilst the `chl` and `hyp` variables had the largest $\lambda$ values
-for seeds 4 and 5 respectively.
+value of $\lambda$ with respective values of 0.403, 0.590 and 0.655.
+Meanwhile the `chl` and `hyp` variables had the largest $\lambda$ values
+for seeds 4 and 5 with values 0.331 and 0.594 respectively. 
+
+Other numerical values have not been included for brevity purposes.
 
 ```{r}
 bmi2 = pool(with(mice(nhanes, seed=2, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
@@ -88,14 +92,146 @@ bmi6 = pool(with(mice(nhanes, seed=6, printFlag=FALSE), glm(bmi ~ age + hyp + ch
 *these analyses over those with M = 5? Explain why.*
 
 **Solution:**
-These results indicate that our conclusions are effectively worthless and are simply due
-to random chance.
+Given that the conclusions derived in 1(c) varied with the random seed, this indicates 
+we must increase the value of $M$ (the number of imputed datasets) in order to reduce
+the probability of our conclusions being governed by random chance.
+
+We set $M=100$ and repeat the analysis outlined in 1(b) and 1(c). We now find that `age`
+is the parameter most affected by the non-response (largest $\lambda$) in 5 of the 6 seeds
+with `chl` taking the same stance for seed 3.
+
+Overall, I would favour the conclusions derived from the $M=100$ results. This is because
+if we analyze the expression of the *total variance* of the imputed parameter estimates
+(in this case `bmi`),
+
+\begin{equation*}
+  V^{\text{MI}} = \bar{U} + B + \frac{B}{M}
+\end{equation*}
+
+where $\bar{U}$ is the *within-imputation variance* and $B$ is again the 
+*between-imputation variance*, we see that increasing $M$ has the effect of reducing
+this quantity thus increasing the reliability of estimations. It should be noted that both
+$B$ and $\bar{U}$ are also  $\propto \frac{1}{M}$ which further reinforces this notion. 
 
 ```{r}
-mbmi1 = pool(with(mice(nhanes, seed=1, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-mbmi2 = pool(with(mice(nhanes, seed=2, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-mbmi3 = pool(with(mice(nhanes, seed=3, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-mbmi4 = pool(with(mice(nhanes, seed=4, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-mbmi5 = pool(with(mice(nhanes, seed=5, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-mbmi6 = pool(with(mice(nhanes, seed=6, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+#mbmi1 = pool(with(mice(nhanes, seed=1, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+#mbmi2 = pool(with(mice(nhanes, seed=2, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+#mbmi3 = pool(with(mice(nhanes, seed=3, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+#mbmi4 = pool(with(mice(nhanes, seed=4, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+#mbmi5 = pool(with(mice(nhanes, seed=5, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+#mbmi6 = pool(with(mice(nhanes, seed=6, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
 ```
+
+# Question 2
+*Each of the 100 datasets contained in `dataex2.Rdata` was generated in the* 
+*following way*
+\begin{equation*}
+ y_i | x_i \stackrel{\text{ind.}}{\sim} \mathcal{N}(\beta_0+\beta_1x_i,1), \quad x_i \stackrel{\text{iid}}{\sim} \text{Unif}(-1, 1), \quad \beta_0 = 1, \quad \beta_1 = 3
+\end{equation*}
+*for* $i = 1,...,100$. *Additionally, some of the responses were set to be missing using a*
+*MAR mechanism.* 
+
+*The goal of this exercise is to study the effect that acknowledging/not*
+*acknowledging parameter uncertainty when performing step 1 of multiple imputation might*
+*have on the coverage of the corresponding confidence intervals. Further suppose that the*
+*analysis of interest in step 2 is to fit the regression model that was used to generate the data,*
+*i.e., a normal linear regression model where the response is* $y$ *and the covariate is* $x$.
+
+*With the*
+*aid of the mice package, calculate the empirical coverage probability of the* $95\%$ *confidence*
+*intervals for* $\beta_1$ *under the following two approaches: stochastic regression imputation and*
+*the corresponding bootstrap based version. Comment. For both approaches, please consider*
+$M = 20$ *and* $\text{seed}=1$
+
+**Solution:**
+The R code below compares two methods used to impute missing values in incomplete datasets:
+stochastic regression imputation (SRI) and 
+
+```{r}
+load('dataex2.Rdata') # Loading in datasets
+
+# Counters to track empirical coverage probability
+count_sri = 0
+count_boot = 0
+
+# Imputations begin...
+for (dataset in 1:2){
+  # SRI & Bootstrap MICE methods initialized
+  imps_sri = mice(dataex2[,,dataset], m=20, seed=1, printFlag=FALSE, method="norm.nob")
+  imps_boot = mice(dataex2[,,dataset], m=20, seed=1, printFlag=FALSE)
+  # Grab 95% CIs
+  stats_sri = summary(pool(with(imps_sri, glm(Y ~ X))), conf.int=TRUE)
+  stats_boot = summary(pool(with(imps_boot, glm(Y ~ X))), conf.int=TRUE)
+  # Checking whether true value (3) of beta1 is in the CIs
+  if (stats_sri$`2.5 %`[2] <= 3 & stats_sri$`97.5 %`[2] >= 3){
+    count_sri = count_sri + 1
+  }
+  if (stats_boot$`2.5 %`[2] <= 3 & stats_boot$`97.5 %`[2] >= 3){
+    count_boot = count_boot + 1
+  } 
+}
+```
+
+
+# Question 3
+*Show that for a linear (in the coefficients) regression model, the following two*
+*strategies coincide:*
+
+1. *Computing the predicted values (point estimates) from each fitted model in step 2 and*
+   *then pooling them according to Rubin’s rule for point estimates (i.e., averaging the*
+    *predicted values across the imputed datasets).*
+      
+2. *Pooling the regression coefficients from each fitted model in step 2 using Rubin’s rule*
+   *for point estimates and then computing the predicted values afterwards.*
+       
+
+# Question 4 
+*The goal of this exercise is to study different ways of using* `mice` *when the analysis model*
+*of interest/substantive model involves an interaction term between incomplete variables. The*
+*model used to generate the data (available in* `dataex4.Rdata`), *which corresponds to our*
+*model of interest in step 2, was the following one:*
+\begin{align*}
+  y_i &= \beta_0 + \beta_1x_{1i} + \beta_2x_{2i} + \beta_3x_{1i}x_{2i} + \epsilon_i,\\
+  x_{1i} &\stackrel{\text{iid}}{\sim} \mathcal{N}(0, 1), \quad x_{2i} \stackrel{\text{iid}}{\sim} \mathcal{N}(1.5, 1), \quad \epsilon_i \stackrel{\text{iid}}{\sim} \mathcal{N}(0,1)
+\end{align*}
+*for* $i=1,...,1000, \beta_0=1.5, \beta_1=1, \beta_2=2, \beta_3=1$.
+
+*Additionally, missingness was*
+*imposed on* $y$ *and* $x_1$ *and so the interaction variable x1x2 also has missing values, although*
+*the missingness in this interaction variable is induced by the missing in the covariate* $x1$. In
+*the following, please use* $M = 50$ *and* `seed=1`.
+
+## Question 4a
+*By only imputing the* $y$ *and* $x1$ *variables in step 1, provide the estimates of*
+$\beta_1, \beta_2\; \text{and} \; \beta_3$ *along with 95% confidence intervals. Comment. Note that this approach*
+*where the interaction variable is left outside the imputation process and calculated afterwards in the analysis* *model, is known as Impute, then transform.*
+
+## Question 4b
+*Now, start by calculating the interaction variable in the incomplete data*
+*and append it as a variable to your dataset. Then, use passive imputation to impute the*
+*interaction variable. Provide the estimates o*f $\beta_1, \beta_2\; \text{and} \; \beta_3$ 
+*along with $95\%$ confidence intervals. Comment.*
+
+## Question 4c
+*Now that you have already appended the interaction variable to the dataset,*
+*impute it as it was just another variable (or like any other variable) in the dataset and*
+*use this variable for the interaction term in step 2. Provide the estimates of* $\beta_1, \beta_2\; \text{and} \; \beta_3$  *along with 95% confidence intervals. Comment.*
+
+## Question 4d
+*What is the obvious conceptual drawback of the just another variable approach for* 
+*imputing interactions?*
+
+# Question 5
+*The file* `NHANES2.Rdata` *contains a subset of data from the National Health*
+*and Nutrition Examination Survey (NHANES), whose goal is to assess the health* 
+*and nutritional status of adults and children in the United States.*
+
+*The analysis of interest is the following:*
+
+\begin{equation*}
+  \text{wgt} = \beta_0 + \beta_1\text{gender} + \beta_3\text{hgt} + \beta_4\text{WC} + \epsilon, \quad \epsilon \sim \mathcal{N}(0, \sigma^2)
+\end{equation*}
+
+*Using multiple imputation and conducting all necessary checks, report your findings.*
+
+

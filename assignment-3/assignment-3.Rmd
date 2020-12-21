@@ -24,7 +24,7 @@ Consider the `nhanes` dataset in `mice`.
 
 **Solution:**
 We observe the NHANES dataset has a total of $25$ cases, $12$ of which are
-incomplete. This gives the incomplete percentage as $48.0\%$ to $3$ significant figures.
+incomplete. This gives the incomplete case percentage as $48.0\%$.
 
 ```{r echo=TRUE}
 # Load in dataset
@@ -41,30 +41,31 @@ na_percentage = sum(!complete.cases(nhanes)) / nrow(nhanes) * 100
 
 **Solution:**
 
-Let *the proportions of variance due to the missing data for each parameter* be denoted
+Let *the proportions of variance due to the missing data for each parameter* be denoted as $\lambda$. 
 
-as $\lambda$. Mathematically, we specify $\lambda$ to be:
+Mathematically, we specify $\lambda$ to be:
 \begin{equation*}
   \lambda = \frac{B + \frac{B}{M}}{V^{\text{MI}}}
 \end{equation*}
 
-where $B$ denotes the *between-imputation* variance, $M$ denotes the number of 
-imputed datasets by `mice` (default = 5) and $V^{\text{MI}}$ is the *total variance*.
+where $M$ denotes the number of imputed datasets by `mice` (default = 5), $B = \frac{1}{M-1}\sum_{m=1}^M\left(\hat{\theta}^{(m)}-\hat{\theta}^{MI}\right)^2$ denotes the *between-imputation* variance, and $V^{\text{MI}} = \bar{U} + (1 + 1/M)B$ is the *total variance*. Note that $\bar{U} = \frac{1}{M}\sum_{m=1}^M\hat{U}^{(m)}$ is known as the
+*within-variance*.
 
 Using the standard MICE procedure - `mice(), with(), pool()` - we yield the following
 values for *the proportions of variance due to the missing data for each parameter* (3SF, seed=1):
 
 * `age` = 0.686
-* `hypten (yes)` = 0.350
-* `chol` = 0.304
+* `hyp (positive)` = 0.350
+* `chl` = 0.304
 
 We observe that the variable `age` has the highest value of $\lambda$ indicating that
 this variable is most affected by the non-response.
+
 ```{r}
 imps = mice(nhanes, seed=1, printFlag=FALSE) # MI step
-fits = with(imps, glm(bmi ~ age + hyp + chl)) # Fitting lm to predict BMI
+fits = with(imps, lm(bmi ~ age + hyp + chl)) # Fitting lm to predict BMI
 bmi_ests = pool(fits) # Gather useful summary statistics
-bmi_ests[,3][c(1, 3, 10)]
+bmi_ests[,3][c(1, 3, 10)] # Extracting only the relevant statistics
 ```
 
 ### Question 1c 
@@ -75,16 +76,18 @@ Repeating an analogous analysis but now varying the seeds to the values given ab
 yield different conclusions. For seeds 2, 3 and 6, the `age` variable had the largest
 value of $\lambda$ with respective values of 0.403, 0.590 and 0.655.
 Meanwhile the `chl` and `hyp` variables had the largest $\lambda$ values
-for seeds 4 and 5 with values 0.331 and 0.594 respectively. 
+for seeds 4 and 5 with values 0.331 and 0.594 respectively. Other numerical values have not been included for brevity purposes.
 
-Other numerical values have not been included for brevity purposes.
+This behaviour can be explained by the fact that $48%$ of our data is missing in the
+NHANES dataset. Therefore, as we adjust the random seed, the proportion of variance due to the missing data can change significantly since it occupies such a large proportion of our
+total data and hence leads us to conflicting conclusions.
 
 ```{r}
-bmi2 = pool(with(mice(nhanes, seed=2, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-bmi3 = pool(with(mice(nhanes, seed=3, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-bmi4 = pool(with(mice(nhanes, seed=4, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-bmi5 = pool(with(mice(nhanes, seed=5, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-bmi6 = pool(with(mice(nhanes, seed=6, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+bmi2 = pool(with(mice(nhanes, seed=2, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
+bmi3 = pool(with(mice(nhanes, seed=3, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
+bmi4 = pool(with(mice(nhanes, seed=4, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
+bmi5 = pool(with(mice(nhanes, seed=5, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
+bmi6 = pool(with(mice(nhanes, seed=6, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
 ```
 
 ### Question 1d
@@ -100,7 +103,7 @@ We set $M=100$ and repeat the analysis outlined in 1(b) and 1(c). We now find th
 is the parameter most affected by the non-response (largest $\lambda$) in 5 of the 6 seeds
 with `chl` taking the same stance for seed 3.
 
-Overall, I would favour the conclusions derived from the $M=100$ results. This is because
+Overall, I would favour the conclusions derived from the $M=100$ results since
 if we analyze the expression of the *total variance* of the imputed parameter estimates
 (in this case `bmi`),
 
@@ -113,13 +116,19 @@ where $\bar{U}$ is the *within-imputation variance* and $B$ is again the
 this quantity thus increasing the reliability of estimations. It should be noted that both
 $B$ and $\bar{U}$ are also  $\propto \frac{1}{M}$ which further reinforces this notion. 
 
+On the contrary, a larger $M$ results in a lower level of statistical efficiency i.e.
+one should be able to arrive at the same statistically significant conclusions
+using a lesser amount of computational resources and time. In this context, $M=100$ is
+easily handled by most modern machines given the NHANES dataset contains only 25 cases - a low
+burden compared to standards of modern datasets.
+
 ```{r}
-#mbmi1 = pool(with(mice(nhanes, seed=1, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-#mbmi2 = pool(with(mice(nhanes, seed=2, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-#mbmi3 = pool(with(mice(nhanes, seed=3, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-#mbmi4 = pool(with(mice(nhanes, seed=4, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-#mbmi5 = pool(with(mice(nhanes, seed=5, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
-#mbmi6 = pool(with(mice(nhanes, seed=6, m=100, printFlag=FALSE), glm(bmi ~ age + hyp + chl)))
+#mbmi1 = pool(with(mice(nhanes, seed=1, m=100, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
+#mbmi2 = pool(with(mice(nhanes, seed=2, m=100, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
+#mbmi3 = pool(with(mice(nhanes, seed=3, m=100, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
+#mbmi4 = pool(with(mice(nhanes, seed=4, m=100, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
+#mbmi5 = pool(with(mice(nhanes, seed=5, m=100, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
+#mbmi6 = pool(with(mice(nhanes, seed=6, m=100, printFlag=FALSE), lm(bmi ~ age + hyp + chl)))
 ```
 
 # Question 2
@@ -144,8 +153,33 @@ $B$ and $\bar{U}$ are also  $\propto \frac{1}{M}$ which further reinforces this 
 $M = 20$ *and* $\text{seed}=1$
 
 **Solution:**
-The R code below compares two methods used to impute missing values in incomplete datasets:
-stochastic regression imputation (SRI) and 
+The R code below compares two methods used to impute missing values in incomplete datasets
+through comparing empirical confidence intervals for the $\beta_1$ parameter, these methods are
+stochastic regression imputation (SRI) and bootstrap sampling.
+
+We remind the reader how confidence intervals (CIs) of an unknown parameter are interpreted 
+in the frequentist paradigm of statistics. Upon collecting a sample of data, 
+a $\text{p}\%$ CI can be constructed from this data. If such intervals were constructed
+repeatedly from collecting more samples of the data, the $\text{p}\%$ CI will contain
+the unknown parameter $\text{p}\%$ of the time.
+
+The R code below hence performs a bootstrap imputation method and a SRI imputation
+method for each of the 100 datasets contained withing `dataex2.Rdata`. Once the
+missing data has been imputed, we derive the $95\%$ CIs for each method and
+check whether the true value of $\beta_1 = 3$ is contained within
+the bootstrap, or SRI, $95\%$ CI. Given the CI interpretation outlined above, one
+would expect the true value of $`\beta_1`$ to be contained within CIs $95\%$ of
+the time for both imputation methods.
+
+In reality, we observe this is true for the bootstrap method (`count_boot = 95`)
+but not for the SRI method whose CIs only contain the true value of $\beta_1$ 
+$88\%$ of the time (`count_sri = 88`). This is because, unlike the bootstrap imputation
+method, SRI does not take into consideration the uncertainty surrounding the 
+imputed values. More simply put, the SRI method treats the imputed values as if
+they were truly observed rather than imputations from missing values.
+This treatment is unjustified and hence results in the construction of more narrow, 
+overly-confident CIs surrounding $\beta_1$ which are less likely to contain
+the true value of $\beta_1$.
 
 ```{r}
 load('dataex2.Rdata') # Loading in datasets
@@ -158,10 +192,10 @@ count_boot = 0
 for (dataset in 1:2){
   # SRI & Bootstrap MICE methods initialized
   imps_sri = mice(dataex2[,,dataset], m=20, seed=1, printFlag=FALSE, method="norm.nob")
-  imps_boot = mice(dataex2[,,dataset], m=20, seed=1, printFlag=FALSE)
+  imps_boot = mice(dataex2[,,dataset], m=20, seed=1, printFlag=FALSE, method="norm.boot")
   # Grab 95% CIs
-  stats_sri = summary(pool(with(imps_sri, glm(Y ~ X))), conf.int=TRUE)
-  stats_boot = summary(pool(with(imps_boot, glm(Y ~ X))), conf.int=TRUE)
+  stats_sri = summary(pool(with(imps_sri, lm(Y ~ X))), conf.int=TRUE)
+  stats_boot = summary(pool(with(imps_boot, lm(Y ~ X))), conf.int=TRUE)
   # Checking whether true value (3) of beta1 is in the CIs
   if (stats_sri$`2.5 %`[2] <= 3 & stats_sri$`97.5 %`[2] >= 3){
     count_sri = count_sri + 1
@@ -197,25 +231,68 @@ for (dataset in 1:2){
 *for* $i=1,...,1000, \beta_0=1.5, \beta_1=1, \beta_2=2, \beta_3=1$.
 
 *Additionally, missingness was*
-*imposed on* $y$ *and* $x_1$ *and so the interaction variable x1x2 also has missing values, although*
-*the missingness in this interaction variable is induced by the missing in the covariate* $x1$. In
-*the following, please use* $M = 50$ *and* `seed=1`.
+*imposed on* $y$ *and* $x_1$ *and so the interaction variable* $x_1x_2$ *also has missing values, although*
+*the missingness in this interaction variable is induced by the missing in the covariate* $x_1$.
 
 ## Question 4a
-*By only imputing the* $y$ *and* $x1$ *variables in step 1, provide the estimates of*
+*By only imputing the* $y$ *and* $x_1$ *variables in step 1, provide the estimates of*
 $\beta_1, \beta_2\; \text{and} \; \beta_3$ *along with 95% confidence intervals. Comment. Note that this approach*
 *where the interaction variable is left outside the imputation process and calculated afterwards in the analysis* *model, is known as Impute, then transform.*
+
+**Solution:**
+
+```{r}
+load('dataex4.Rdata') # Load data
+q4a_imps = mice(dataex4, m=50, seed=1, printFlag=FALSE)
+q4a_ests = with(q4a_imps, lm(y ~ x1 + x2 + x1*x2))
+summary(pool(q4a_ests), conf.int=TRUE)
+```
 
 ## Question 4b
 *Now, start by calculating the interaction variable in the incomplete data*
 *and append it as a variable to your dataset. Then, use passive imputation to impute the*
 *interaction variable. Provide the estimates o*f $\beta_1, \beta_2\; \text{and} \; \beta_3$ 
 *along with $95\%$ confidence intervals. Comment.*
+```{r}
+# Create interaction variable (z=x1*x2)
+dataex4$z = dataex4$x1 * dataex4$x2
+# Initial MICE setup
+imp_0_pass = mice(dataex4, maxit = 0, seed=1, m=50)
+# Specify that z is derived from x1 and x3
+meth_pass = imp_0_pass$method
+meth_pass["z"] = "~I(x1*x2)"
+
+pred_pass = imp_0_pass$predictorMatrix
+pred_pass[c("x1", "x2"), "z"] = 0 # Don't use z to predict x1 and x2
+pred_pass[, c("x1", "x2")] = 0 # Prevent multi-colinearity
+# Restore imputations between x1 and x2
+pred_pass["x1", "x2"] = 1 
+pred_pass["x2", "x1"] = 1
+
+# MI begins...
+imp_pass = mice(dataex4, 
+                method = meth_pass, 
+                predictorMatrix = pred_pass, 
+                m = 50, 
+                seed = 1, 
+                printFlag = FALSE)
+imp_pass_ests = with(imp_pass, lm(y ~ x1 + x2 + z))
+summary(pool(imp_pass_ests), conf.int=TRUE)
+```
 
 ## Question 4c
 *Now that you have already appended the interaction variable to the dataset,*
 *impute it as it was just another variable (or like any other variable) in the dataset and*
 *use this variable for the interaction term in step 2. Provide the estimates of* $\beta_1, \beta_2\; \text{and} \; \beta_3$  *along with 95% confidence intervals. Comment.*
+
+```{r}
+# Just another variable imputation
+imps_jav = mice(dataex4, m=50, seed=1, printFlag=FALSE)
+ests_jav = with(imps_jav, lm(y ~ x1 + x2 + z))
+summary(pool(ests_jav), conf.int=TRUE)
+```
+
+
 
 ## Question 4d
 *What is the obvious conceptual drawback of the just another variable approach for* 

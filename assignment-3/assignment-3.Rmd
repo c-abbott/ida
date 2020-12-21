@@ -4,8 +4,8 @@ title: |
   <center> Assignment 2 </center>
 author: "<center> Callum Abbott </center>"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
@@ -15,6 +15,8 @@ library(rjags)
 ```
 
 All code used for this assignment can be found in the following repository [https://github.com/c-abbott/ida] under the folder `assignment-3`.
+
+roses are \textcolor{red}{red}.
 
 ## Question 1
 Consider the `nhanes` dataset in `mice`.
@@ -154,8 +156,8 @@ $M = 20$ *and* $\text{seed}=1$
 
 **Solution:**
 The R code below compares two methods used to impute missing values in incomplete datasets
-through comparing empirical confidence intervals for the $\beta_1$ parameter, these methods are
-stochastic regression imputation (SRI) and bootstrap sampling.
+through comparing empirical confidence intervals for the $\beta_1$ parameter -
+these methods are stochastic regression imputation (SRI) and bootstrap sampling.
 
 We remind the reader how confidence intervals (CIs) of an unknown parameter are interpreted 
 in the frequentist paradigm of statistics. Upon collecting a sample of data, 
@@ -163,12 +165,12 @@ a $\text{p}\%$ CI can be constructed from this data. If such intervals were cons
 repeatedly from collecting more samples of the data, the $\text{p}\%$ CI will contain
 the unknown parameter $\text{p}\%$ of the time.
 
-The R code below hence performs a bootstrap imputation method and a SRI imputation
+The R code below hence performs a bootstrap and SRI imputation
 method for each of the 100 datasets contained withing `dataex2.Rdata`. Once the
 missing data has been imputed, we derive the $95\%$ CIs for each method and
 check whether the true value of $\beta_1 = 3$ is contained within
 the bootstrap, or SRI, $95\%$ CI. Given the CI interpretation outlined above, one
-would expect the true value of $`\beta_1`$ to be contained within CIs $95\%$ of
+would expect the true value of $\beta_1$ to be contained within CIs $95\%$ of
 the time for both imputation methods.
 
 In reality, we observe this is true for the bootstrap method (`count_boot = 95`)
@@ -211,19 +213,47 @@ for (dataset in 1:2){
 *Show that for a linear (in the coefficients) regression model, the following two*
 *strategies coincide:*
 
-1. *Computing the predicted values (point estimates) from each fitted model in step 2 and*
+* Method 1: *Computing the predicted values (point estimates) from each fitted model in step 2 and*
    *then pooling them according to Rubin’s rule for point estimates (i.e., averaging the*
     *predicted values across the imputed datasets).*
       
-2. *Pooling the regression coefficients from each fitted model in step 2 using Rubin’s rule*
+* Method 2: *Pooling the regression coefficients from each fitted model in step 2 using Rubin’s rule*
    *for point estimates and then computing the predicted values afterwards.*
        
+**Solution:**
+
+Let us begin by first defining a general linear (in the coefficients) regression
+model with a total of $N$ covariates to act as our substantive model in the multiple
+imputation process ($\epsilon \sim \mathcal{N}(0, \sigma^2)$).
+
+\begin{align*}
+  y &= \sum_{i=0}^N \beta_ix_i + \epsilon \\
+  &= \beta_0 + \sum_{i=1}^N \beta_ix_i + \epsilon
+\end{align*}
+
+Let us assume that step 1 of the multiple imputation process has been performed
+and we are in possession of a total of $M$ imputed datasets. We fit the previously
+defined regression model to each of these M datasets yielding a set of predictions, $\mathbf{\hat{y}} = (\hat{y}^{(1)},\hat{y}^{(2)},...,\hat{y}^{(M)})$. Method 1 instructs us to pool these predictions according to Rubin's rule for point estimates yielding,
+
+\begin{align*}
+  \tilde{y} &= \frac{1}{M}\sum_{m=1}^M\color{green}{\hat{y}^{(m)}}\\
+  &= \frac{1}{M}\sum_{m=1}^M\color{green}{\sum_{i=0}^N \beta_i^{(m)}x_i}\\
+  &= \color{red}{\sum_{i=0}^Nx_i}\color{blue}{\frac{1}{M}\sum_{m=1}^M\beta_i^{(m)}}\\
+  &= \color{red}{\sum_{i=0}^N}\color{blue}{\tilde{\beta}_i}\color{red}{x_i}
+\end{align*}
+
+where $\tilde{\beta}_i=\frac{1}{M}\sum_{m=1}^M\beta_i^{(m)}$ - **the pooled regression
+coefficients according to Rubin's rules (Method 2)**.
+
+The equations derived above hence indicate that Method 1 and Method 2 are mathematically
+equivalent and will lead to the same results and conclusions.
 
 # Question 4 
 *The goal of this exercise is to study different ways of using* `mice` *when the analysis model*
 *of interest/substantive model involves an interaction term between incomplete variables. The*
 *model used to generate the data (available in* `dataex4.Rdata`), *which corresponds to our*
 *model of interest in step 2, was the following one:*
+
 \begin{align*}
   y_i &= \beta_0 + \beta_1x_{1i} + \beta_2x_{2i} + \beta_3x_{1i}x_{2i} + \epsilon_i,\\
   x_{1i} &\stackrel{\text{iid}}{\sim} \mathcal{N}(0, 1), \quad x_{2i} \stackrel{\text{iid}}{\sim} \mathcal{N}(1.5, 1), \quad \epsilon_i \stackrel{\text{iid}}{\sim} \mathcal{N}(0,1)

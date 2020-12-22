@@ -12,11 +12,10 @@ output:
 knitr::opts_chunk$set(eval = TRUE, echo = TRUE)
 library(mice)
 library(rjags)
+library(JointAI)
 ```
 
 All code used for this assignment can be found in the following repository [https://github.com/c-abbott/ida] under the folder `assignment-3`.
-
-roses are \textcolor{red}{red}.
 
 ## Question 1
 Consider the `nhanes` dataset in `mice`.
@@ -80,7 +79,7 @@ value of $\lambda$ with respective values of 0.403, 0.590 and 0.655.
 Meanwhile the `chl` and `hyp` variables had the largest $\lambda$ values
 for seeds 4 and 5 with values 0.331 and 0.594 respectively. Other numerical values have not been included for brevity purposes.
 
-This behaviour can be explained by the fact that $48%$ of our data is missing in the
+This behaviour can be explained by the fact that $48\%$ of cases our are missing in the
 NHANES dataset. Therefore, as we adjust the random seed, the proportion of variance due to the missing data can change significantly since it occupies such a large proportion of our
 total data and hence leads us to conflicting conclusions.
 
@@ -233,11 +232,11 @@ imputation process ($\epsilon \sim \mathcal{N}(0, \sigma^2)$).
 
 Let us assume that step 1 of the multiple imputation process has been performed
 and we are in possession of a total of $M$ imputed datasets. We fit the previously
-defined regression model to each of these M datasets yielding a set of predictions, $\mathbf{\hat{y}} = (\hat{y}^{(1)},\hat{y}^{(2)},...,\hat{y}^{(M)})$. Method 1 instructs us to pool these predictions according to Rubin's rule for point estimates yielding,
+defined regression model to each of these $M$ datasets yielding a set of predictions, $\mathbf{\hat{y}} = (\hat{y}^{(1)},\hat{y}^{(2)},...,\hat{y}^{(M)})$. Method 1 instructs us to pool these predictions according to Rubin's rule for point estimates yielding,
 
 \begin{align*}
-  \tilde{y} &= \frac{1}{M}\sum_{m=1}^M\color{green}{\hat{y}^{(m)}}\\
-  &= \frac{1}{M}\sum_{m=1}^M\color{green}{\sum_{i=0}^N \beta_i^{(m)}x_i}\\
+  \tilde{y} &= \frac{1}{M}\sum_{m=1}^M\color{orange}{\hat{y}^{(m)}}\\
+  &= \frac{1}{M}\sum_{m=1}^M\color{orange}{\sum_{i=0}^N \beta_i^{(m)}x_i}\\
   &= \color{red}{\sum_{i=0}^Nx_i}\color{blue}{\frac{1}{M}\sum_{m=1}^M\beta_i^{(m)}}\\
   &= \color{red}{\sum_{i=0}^N}\color{blue}{\tilde{\beta}_i}\color{red}{x_i}
 \end{align*}
@@ -271,18 +270,70 @@ $\beta_1, \beta_2\; \text{and} \; \beta_3$ *along with 95% confidence intervals.
 
 **Solution:**
 
+Solution 4a sees us perform the *impute, then transform* method of imputation
+where we choose to explicitly impute $x_1$ and $y$ using MICE, and then use the 
+imputed $x_1$ values to passively impute the interaction term, $x_1x_2$, in our 
+substantive model.
+
+Using a value of $M=50$, `seed=1`  and `maxit=5` we obtain the following estimates and $95\%$
+CIs for $\beta_1$, $\beta_2$, and $\beta_3$ (3SF):
+
+* $\beta_1 = 1.41;\quad$        $95\%\text{CI}=[1.22, 1.60]$
+* $\beta_2 = 1.97;\quad$        $95\%\text{CI}=[1.86, 2.07]$
+* $\beta_3 = 0.75;\quad$       $95\%\text{CI}=[0.642, 0.868]$
+
+Analyzing these results we observe that only the 95% CI associated with $\beta_2$
+contains the true value of the parameter ($\beta_2=2$) and a reasonable estimate. 
+This is however rather meaningless since the $x_2$ variable was already fully observed and never
+imputed.
+
+
+Meanwhile, we observe that the 95% CIs associated with $\beta_1$ and $\beta_3$ fail
+to include the true values of these parameters ($\beta_1=1$, $\beta_3 =1$) and provide
+relatively inaccurate estimates. This is unsurprising behaviour since the impute then 
+transform method (in general) is known to lead biased estimates (*Hippel, 2009*).
+
+
 ```{r}
 load('dataex4.Rdata') # Load data
-q4a_imps = mice(dataex4, m=50, seed=1, printFlag=FALSE)
-q4a_ests = with(q4a_imps, lm(y ~ x1 + x2 + x1*x2))
-summary(pool(q4a_ests), conf.int=TRUE)
+q4a_imps0 = mice(dataex4, m=50, seed=1, printFlag=FALSE, maxit=0) # Initial MICE
+q4a_imps0$predictorMatrix["x2",] = 0 # Explicitly preventing x2 from being imputed
+
+# Running MICE with new predictorMatrix
+q4a_imps = mice(dataex4, m=50, seed=1, printFlag=FALSE,
+                predictorMatrix=q4a_imps0$predictorMatrix) 
+q4a_ests = with(q4a_imps, lm(y ~ x1 + x2 + x1*x2)) # Getting estimates
+summary(pool(q4a_ests), conf.int=TRUE)[-1,c(1,2,7,8)] # Extracting relevant statistics
 ```
+
 
 ## Question 4b
 *Now, start by calculating the interaction variable in the incomplete data*
 *and append it as a variable to your dataset. Then, use passive imputation to impute the*
-*interaction variable. Provide the estimates o*f $\beta_1, \beta_2\; \text{and} \; \beta_3$ 
+*interaction variable. Provide the estimates of* $\beta_1, \beta_2\; \text{and} \; \beta_3$ 
 *along with $95\%$ confidence intervals. Comment.*
+
+
+**Solution:**
+
+Solution 4b sees us add the interaction term to our dataset, $z = x_1x_2$,
+and use passive imputation to impute the missing values (maintaining the
+deterministic relationship).
+
+Using a value of $M=50$, `seed=1` and `maxit=5` we obtain the following estimates and $95\%$
+CIs for $\beta_1$, $\beta_2$, and $\beta_3$ (3SF):
+
+* $\beta_1 = 1.19;\quad$        $95\%\text{CI}=[1.0035, 1.38]$
+* $\beta_2 = 2.00;\quad$        $95\%\text{CI}=[1.90, 2.09]$
+* $\beta_3 = 0.874;\quad$       $95\%\text{CI}=[0.762, 0.987]$
+
+Using this imputation method we now observe an increase in the accuracy of the estimates
+made for all three parameters. In addition, although the 95% CIs for $\beta_1$ and
+$\beta_3$ still do not include the true value of these parameter, they
+are much closer to doing so than the method implemented in Q4a. Passive imputation,
+in this context, has hence resulted in a reduction in the bias of our estimates made by 
+our substantive model but not eradicated the problem.
+
 ```{r}
 # Create interaction variable (z=x1*x2)
 dataex4$z = dataex4$x1 * dataex4$x2
@@ -293,11 +344,8 @@ meth_pass = imp_0_pass$method
 meth_pass["z"] = "~I(x1*x2)"
 
 pred_pass = imp_0_pass$predictorMatrix
-pred_pass[c("x1", "x2"), "z"] = 0 # Don't use z to predict x1 and x2
-pred_pass[, c("x1", "x2")] = 0 # Prevent multi-colinearity
-# Restore imputations between x1 and x2
-pred_pass["x1", "x2"] = 1 
-pred_pass["x2", "x1"] = 1
+pred_pass[c("x1", "x2"), "z"] = 0 # Don't use z to impute x1 and x2
+pred_pass["z", "y"] = 0 # Don't use y to impute z
 
 # MI begins...
 imp_pass = mice(dataex4, 
@@ -307,7 +355,7 @@ imp_pass = mice(dataex4,
                 seed = 1, 
                 printFlag = FALSE)
 imp_pass_ests = with(imp_pass, lm(y ~ x1 + x2 + z))
-summary(pool(imp_pass_ests), conf.int=TRUE)
+summary(pool(imp_pass_ests), conf.int=TRUE)[-1,c(1,2,7,8)] 
 ```
 
 ## Question 4c
@@ -315,11 +363,36 @@ summary(pool(imp_pass_ests), conf.int=TRUE)
 *impute it as it was just another variable (or like any other variable) in the dataset and*
 *use this variable for the interaction term in step 2. Provide the estimates of* $\beta_1, \beta_2\; \text{and} \; \beta_3$  *along with 95% confidence intervals. Comment.*
 
+**Solution:**
+
+We now treat the interaction term, $z = x_1x_2$, as if it were *just another variable*
+(JAV) meaning that missing values of $z$ are imputed independently of missing
+$x_1$ values.
+
+Repeating the procedure performed in 4a and 4b with $M=50$, `seed=1` and `maxit=5`,
+we obtain the following estimates and $95\%$ CIs for $\beta_1$, $\beta_2$, and $\beta_3$ (3SF):
+
+* $\beta_1 = 1.0039;\quad$        $95\%\text{CI}=[0.841, 1.17]$
+* $\beta_2 = 2.03;\quad$        $95\%\text{CI}=[1.94, 2.11]$
+* $\beta_3 = 1.02;\quad$       $95\%\text{CI}=[0.930, 1.105]$
+
+We now observe in the regime of treating the interaction term as just another
+variable yields estimates which are accurately to at least 1 decimal place
+and all three 95% CIs contain the true parameter values. This is a significant
+improvement to what was observed in 4a and 4b.
+
+We can explain this result by the fact that although the substantive model is 
+incorrectly specified (regarding the inconsistency in imputed vales) the imputations 
+created for all variables do in fact have the correct means and covariances. We
+recall that the parameters of our substantive model (the coefficients) depend
+only on these imputed values, and hence result in a set of unbiased estimates for the missing
+data values.
+
 ```{r}
 # Just another variable imputation
 imps_jav = mice(dataex4, m=50, seed=1, printFlag=FALSE)
 ests_jav = with(imps_jav, lm(y ~ x1 + x2 + z))
-summary(pool(ests_jav), conf.int=TRUE)
+summary(pool(ests_jav), conf.int=TRUE)[-1,c(1,2,7,8)]
 ```
 
 
@@ -327,6 +400,14 @@ summary(pool(ests_jav), conf.int=TRUE)
 ## Question 4d
 *What is the obvious conceptual drawback of the just another variable approach for* 
 *imputing interactions?*
+
+The cost of obtaining unbiased estimates for the parameters of our linear regression
+model is that the deterministic relationship for the interaction term, $z=x_1x_2$,
+no longer holds.
+
+Re-iterating this point more explicitly, when we impute missing values of $z$ independently
+of $x_1$, we remove the deterministic dependence between these two variables and hence
+$z \neq x_1x_2$ for the imputed $z$ values.
 
 # Question 5
 *The file* `NHANES2.Rdata` *contains a subset of data from the National Health*
@@ -341,4 +422,27 @@ summary(pool(ests_jav), conf.int=TRUE)
 
 *Using multiple imputation and conducting all necessary checks, report your findings.*
 
+```{r}
+load('NHANES2.Rdata')
+dim(NHANES2)
+md_pattern(NHANES2, pattern = FALSE, color = c('#34111b', '#e30f41'))
+```
+
+```{r}
+# Does MICE handles NaNs
+# Passive imputation between SBP and Hypternsive, maybe?
+# Correlation
+par(mar = c(3, 3, 2, 1), mgp = c(2, 0.6, 0))
+plot_all(NHANES2, breaks = 30, ncol = 4)
+```
+
+```{r}
+#q5_imps = mice(NHANES2, m=5, seed=1, printFlag=FALSE)
+#with(q5_imps, lm(y ~ x1 + x2 + z))
+#summary(pool(ests_jav), conf.int=TRUE)
+```
+
+
+## References
+Hippel, P.T., 2009. How to Impute Interactions, Squares, and Other Transformed Variables. Sociological methodology, 39(1), pp.265–291.
 

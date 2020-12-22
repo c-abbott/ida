@@ -673,7 +673,40 @@ is **not** a cause for concern since we are only imputing  a single missing
 value out of 500 cases. Meanwhile, for the `hypten` variable, we observe
 a reasonable amount between imputation variance but not enough such that the 
 general distribution of this variable is lost. In summary, all imputations
-for variables with missing data have been performed succesfully.
+for variables with missing data have been performed successfully.
+
+### Model Fit Analysis
+We conclude this investigation by analyzing the fit of the model of interest
+
+```{r, fig.width=6, fig.height=4}
+fit = with(imp, lm(wgt ~ gender + age + hgt + WC))
+summary(fit$analyses[[1]])
+par(mfrow=c(1,2))
+plot(fit$analyses[[1]]$fitted.values, residuals(fit$analyses[[1]]),
+xlab = "Fitted values", ylab = "Residuals", main = "Residual Comparison")
+qqnorm(rstandard(fit$analyses[[1]]), xlim = c(-4, 4), ylim = c(-6, 6))
+qqline(rstandard(fit$analyses[[1]]), col = 2)
+
+summary(fit$analyses[[2]])
+par(mfrow=c(1,2))
+plot(fit$analyses[[2]]$fitted.values, residuals(fit$analyses[[1]]),
+xlab = "Fitted values", ylab = "Residuals", main = "Residual Comparison")
+qqnorm(rstandard(fit$analyses[[2]]), xlim = c(-4, 4), ylim = c(-6, 6))
+qqline(rstandard(fit$analyses[[2]]), col = 2)
+```
+
+
+```{r echo=FALSE}
+pooled_ests <- pool(fit)
+df <- data.frame(summary(pooled_ests, conf.int = TRUE)[c(1,2,7,8)])
+rownames(df) <- c("$\\beta_0$", "$\\beta_1$","$\\beta_2$", "$\\beta_3$", "$\\beta_4$")
+knitr::kable(df, escape = FALSE, digits = 3,
+caption = "Final Parameter Estimates")
+```
+
+```{r}
+pool.r.squared(fit, adjusted = TRUE)
+```
 
 
 

@@ -4,8 +4,8 @@ title: |
   <center> Assignment 2 </center>
 author: "<center> Callum Abbott </center>"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 
 ```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
@@ -410,6 +410,7 @@ of $x_1$, we remove the deterministic dependence between these two variables and
 $z \neq x_1x_2$ for the imputed $z$ values.
 
 # Question 5
+
 *The file* `NHANES2.Rdata` *contains a subset of data from the National Health*
 *and Nutrition Examination Survey (NHANES), whose goal is to assess the health* 
 *and nutritional status of adults and children in the United States.*
@@ -531,9 +532,6 @@ par(mar = c(3, 3, 2, 1), mgp = c(2, 0.6, 0))
 plot_all(NHANES2, breaks = 30, ncol = 4, fill = '#D10E3B', border = '#460E1B')
 ```
 
-
-
-
 ```{r}
 imp0 = mice(NHANES2, maxit = 0) # Initial MICE set up
 imp0
@@ -543,8 +541,140 @@ meth["hgt"] = "norm"
 # Restricting support imputation output
 post = imp0$post
 post["hgt"] <- "imp[[j]][,i] <- squeeze(imp[[j]][,i], c(0.5, 2.8))"
-imp0
 ```
+
+We observe in the `predictorMatrix` object that every variable is being used to impute
+every other variable which is the desired behavior. We also note the use of `polr` to impute the `educ` variable 
+since it requires multi-class classification whilst `logreg` is used for `hypten`
+since this variable only requires binary classification. This configuration is now
+suitable to begin the multiple imputation process.
+
+### Multiple Imputation
+We begin this process by first considering a suitable value for $M$ - the number
+of datasets that are to be imputed. We will investigate three values of $M$, specifically,
+$M \in \{5, 10, 25\}$. A suitable value of $M$ would be one which has low variance
+between random seeds but is not so high that it is unnecessarily computationally expensive.
+Random seeds 1 and 2 were used to necessitate this investigation.
+
+We remind the reader the model of interest is the following:
+\begin{equation*}
+  \text{wgt} = \beta_0 + \beta_1\text{gender} + \beta_3\text{hgt} + \beta_4\text{WC} + \epsilon, \quad \epsilon \sim \mathcal{N}(0, \sigma^2)
+\end{equation*}
+
+
+```{r eval=FALSE, include=FALSE}
+# MI for M=5
+seed1 = pool(with(mice(NHANES2, methods = meth, post = post,
+                            maxit = 20, m = 5, seed = 1, printFlag = FALSE),
+                       lm(wgt ~ gender + age + hgt + WC)))
+
+seed2 = pool(with(mice(NHANES2, methods = meth, post = post,
+                            maxit = 20, m = 5, seed = 2, printFlag = FALSE),
+                       lm(wgt ~ gender + age + hgt + WC)))
+summary(seed1, conf.int = TRUE)[c(1,2,6,7,8)]
+summary(seed2, conf.int = TRUE)[c(1,2,6,7,8)]
+
+# MI for M=10
+seed1_10 = pool(with(mice(NHANES2, methods = meth, post = post,
+                                maxit = 20, m = 10, seed = 1, printFlag = FALSE),
+                           lm(wgt ~ gender + age + hgt + WC)))
+seed2_10 = pool(with(mice(NHANES2, methods = meth, post = post,
+                                maxit = 20, m = 10, seed = 2, printFlag = FALSE),
+                           lm(wgt ~ gender + age + hgt + WC)))
+summary(seed1_10, conf.int = TRUE)[c(1,2,6,7,8)]
+summary(seed2_10, conf.int = TRUE)[c(1,2,6,7,8)]
+
+# MI for M=25
+seed1_25 = pool(with(mice(NHANES2, methods = meth, post = post,
+                                maxit = 20, m = 25, seed = 1, printFlag = FALSE),
+                           lm(wgt ~ gender + age + hgt + WC)))
+seed2_25 = pool(with(mice(NHANES2, methods = meth, post = post,
+                                maxit = 20, m = 25, seed = 2, printFlag = FALSE),
+                           lm(wgt ~ gender + age + hgt + WC)))
+summary(seed1_25, conf.int = TRUE)[c(1,2,6,7,8)]
+summary(seed2_25, conf.int = TRUE)[c(1,2,6,7,8)]
+```
+
+The summary statistics above show that the value of $M=10$ strikes a nice compromise
+of being both computationally efficient (relevant to $M=25$) and robust to random variation
+due to seed choice. 
+
+We hence proceed to perform multiple imputation on the `NHANES2` dataset with `maxit=20`,
+`seed=1` and $M=10$. Note that in the code below the `meth` and `post` variables previously
+defined were also passed to the `mice()` function and that the `loggedEvents` attribute 
+was checked to see if `mice()` detected any problems during the multiple imputation process.
+
+```{r}
+imp <- mice(NHANES2, methods = meth, post = post,
+            maxit = 20, m = 10, seed = 1, printFlag = FALSE)
+imp$loggedEvents
+```
+
+No problems were detected during the imputation process hence we check the Monte Carlo
+chains to ensure convergence across all 12 variables.
+
+```{r, fig.height=8, fig.width=8}
+plot(imp, layout=c(2,8))
+```
+For the 10 MC chains initialized we observe no clear pattern among any of the chains indicating convergence
+for all variables. We note that the standard deviation of the `educ` chain is blank
+simply because this variable contains only a single missing value.
+
+It is now instructive to analyze the imputed values provided by `mice()` using box
+and density plots for the continuous variables.
+
+```{r, fig.dim=c(6,3)}
+bwplot(imp)[c(2,4,5,6,7,8)]
+densityplot(imp)
+```
+
+The plot above present the box and density plots for the observed (blue) and imputed (red)
+datasets for the continuous varaibles. We see that most imputed datasets follow a similar
+distribution to their observed counterpart besides `hgt` which chows a clear shift towards
+lower values.
+
+From the conditional (`hgt|gender` and `hgt|hypten`) density plot shown below, we 
+observe that an individual's gender and hyptensive classification strongly influences 
+the imputed datasets. Specifically, `male` and `hypten (positive)` have much more
+narrow, concentrated distributions whilst `female` and `hypten (negative)` present much
+wider distributions. 
+
+```{r}
+densityplot(imp,~hgt|gender, xlim = c(1, 2.2))
+densityplot(imp,~hgt|hypten, xlim = c(1, 2.2))
+```
+
+To further check whether the imputations for `hgt` variable were appropriate, we create
+a `stripplot` which allows the imputed `hgt` values to be compared to the observed values
+more explicitly.
+
+Nothing looks suspicious in the `stripplot` hence we can move on with confidence that
+our imputations for all continuous variables with missing data are reasonable.
+
+```{r}
+stripplot(imp)[6]
+```
+We now move on to check whether the imputed values for the discrete variables, `educ`
+and `hypten`, were appropriate. A [propplot]("https://gist.githubusercontent.com/NErler/0d00375da460dd33839b98faeee2fdab/raw/c6f537ecf80eddcefd94992ec7926aa57d454536/propplot.R") (below) easily demonstrates this by presenting
+the proportion of values assigned to each category.
+
+```{r fig.width=6, message=FALSE, warning=FALSE}
+require(devtools)
+require(reshape2)
+require(RColorBrewer)
+require(ggplot2)
+source_url("https://gist.githubusercontent.com/NErler/0d00375da460dd33839b98faeee2fdab/raw/c6f537ecf80eddcefd94992ec7926aa57d454536/propplot.R")
+
+propplot(imp)
+```
+
+We observe an abnormal imputation pattern for the `educ` varaible however this
+is **not** a cause for concern since we are only imputing  a single missing
+value out of 500 cases. Meanwhile, for the `hypten` variable, we observe
+a reasonable amount between imputation variance but not enough such that the 
+general distribution of this variable is lost. In summary, all imputations
+for variables with missing data have been performed succesfully.
+
 
 
 ## References

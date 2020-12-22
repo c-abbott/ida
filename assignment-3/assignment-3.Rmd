@@ -4,8 +4,8 @@ title: |
   <center> Assignment 2 </center>
 author: "<center> Callum Abbott </center>"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 ---
 
 ```{r setup, echo=FALSE, results='hide', message=FALSE, warning=FALSE}
@@ -13,6 +13,9 @@ knitr::opts_chunk$set(eval = TRUE, echo = TRUE)
 library(mice)
 library(rjags)
 library(JointAI)
+library(corrplot)
+library(tidyr)
+library(dplyr)
 ```
 
 All code used for this assignment can be found in the following repository [https://github.com/c-abbott/ida] under the folder `assignment-3`.
@@ -284,9 +287,6 @@ CIs for $\beta_1$, $\beta_2$, and $\beta_3$ (3SF):
 
 Analyzing these results we observe that only the 95% CI associated with $\beta_2$
 contains the true value of the parameter ($\beta_2=2$) and a reasonable estimate. 
-This is however rather meaningless since the $x_2$ variable was already fully observed and never
-imputed.
-
 
 Meanwhile, we observe that the 95% CIs associated with $\beta_1$ and $\beta_3$ fail
 to include the true values of these parameters ($\beta_1=1$, $\beta_3 =1$) and provide
@@ -422,24 +422,128 @@ $z \neq x_1x_2$ for the imputed $z$ values.
 
 *Using multiple imputation and conducting all necessary checks, report your findings.*
 
+```{r include=FALSE}
+load("NHANES2.Rdata")
+```
+
+### Exploratory Data Analysis (EDA)
+We begin our analysis of the `NHANES2` dataset with some exploratory data analysis
+(EDA) in order to gain a sense of the data we are working with.
+
 ```{r}
-load('NHANES2.Rdata')
+head(NHANES2)
 dim(NHANES2)
-md_pattern(NHANES2, pattern = FALSE, color = c('#34111b', '#e30f41'))
+```
+We see that the data set consists of 500 cases with 12 variables measured for each case:
+
+* `wgt`: weight in kg,
+* `gender`: male vs female,
+* `bili`: bilirubin concentration in mg/dL,
+* `age`: in years,
+* `chol`: total serum cholesterol in mg/dL,
+* `HDL`: High-density lipoprotein cholesterol in mg/dL,
+* `hgt`: height in metres,
+* `educ`: educational status; 5 ordered categories,
+* `race`: 5 unordered categories,
+* `SBP`: systolic blood pressure in mmHg,
+* `hypten`: hypertensive status; binary,
+* `WC`: waist circumference in cm
+
+It is now instructive to investigate which variables contain missing values and which
+have been fully observed. We perform this analysis using the `md_pattern()` function
+provided by the [JointAI](https://nerler.github.io/JointAI/) package. 
+
+The missing data matrix presented below reveals that only `wgt`, `gender`, `age` and `race` 
+are fully observed whilst the other 8 variables have the number of missing values
+ranging from 1 (`educ`) to 47 (`bili`).
+
+```{r}
+JointAI::md_pattern(NHANES2, pattern = FALSE, color = c('#34111b', '#e30f41'))
+```
+
+It should be noted that the missing values within the `NHANES2` dataset provided are
+represented by `NaN`s rather than the usual `NA`. With the expectation that we 
+will perform multiple imputation using the [`mice`](https://cran.r-project.org/web/packages/mice/index.html) package to impute the
+previously mentioned missing values, we transform all `NaN`s to `NA`s.
+
+```{r}
+NHANES2 = na_if(NHANES2, NaN)
+```
+
+We also believe that it is useful to gain a sense of which variables in the `NHANES2` 
+dataset are related to one another by analyzing the correlations between variables. A 
+nice package for conducting this kind of analysis is [`corrplot`](https://cran.r-project.org/web/packages/corrplot/index.html) which
+provides the results shown below.
+
+We observe some unsurprising results such as `gender` being correlated to `hgt`
+(height) as well as a strong positive correlation between `wgt` (weight) and `WC`
+(waist circumference). More interestingly we observe a significant positive correlation
+(>0.5) between `SBP` (systolic blood pressure) and `hypten` (binary hypertensive classification).
+Conducting further research into these two variables reveals that an individual 
+is classified as hypertensive if their SBP/DBP (diastolic blood pressure) consistently
+recorded at 140/90 mmHg.
+
+This finding indicates that the `hypten` variable is in some sense derived from
+the `SBP` variable and we should consider the option of using passive imputation 
+as our imputation method. However, analysis below reveals there are 61 instances
+of a person being positively classified as hypertensive with a `SBP` less than 
+140 mmHg. This result suggests that the DBP of an individual plays an important
+role in their classification as being hyptertensive and is a variable
+we unfortunately have no data for. 
+
+From the above findings we choose to treat the `hypten` variable as if it were
+**not** derived from the `SBP` given the lack of data on an individual's DBP.
+```{r}
+# Converting factor variables to numeric for corrplot()
+corr_viz = NHANES2 %>%
+  mutate_if(is.factor, as.numeric)
+
+# Visualsing correlations
+correlation = cor(corr_viz, method="pearson", use="complete.obs")
+corrplot(correlation, type = "upper", order = "hclust", 
+         tl.col = "black", tl.srt = 45)
 ```
 
 ```{r}
-# Does MICE handles NaNs
-# Passive imputation between SBP and Hypternsive, maybe?
-# Correlation
+NHANES2[c("SBP", "hypten")] %>%
+  filter(SBP < 140) %>%
+  count(hypten, name="frequency")
+```
+We conclude our EDA by finally visualzing all 12 of our variables in order to gain a 
+sense of how they are distributed. It seems as though all continuous variables barring `hgt`
+are rightly skewed, and hence will be poorly approximated by a normal distribution
+indicating that predictive mean matching (PMM) should be the method of choice. Meanwhile,
+it seems as though the `hgt` variable could be approximated well by a normal distribution (as
+one would expect if the NHANES data collectors strived for a representative population
+sample). 
+
+We thus modify the method of imputation for the `hgt` variable from PMM to
+`norm` which implements (normal linear) stochastic regression imputation where the regression
+coefficients are drawn from the appropriate posteriors to ensure uncertainty is taken
+into consideration and proper multiple imputation is conducted. Note that in order
+to prevent negative height values being imputed for this variable, we restrict the 
+the height imputations to lie between 50cm and 280cm which firmly encompasses all human
+heights that have been recorded.
+
+
+```{r}
 par(mar = c(3, 3, 2, 1), mgp = c(2, 0.6, 0))
-plot_all(NHANES2, breaks = 30, ncol = 4)
+plot_all(NHANES2, breaks = 30, ncol = 4, fill = '#D10E3B', border = '#460E1B')
 ```
 
+
+
+
 ```{r}
-#q5_imps = mice(NHANES2, m=5, seed=1, printFlag=FALSE)
-#with(q5_imps, lm(y ~ x1 + x2 + z))
-#summary(pool(ests_jav), conf.int=TRUE)
+imp0 = mice(NHANES2, maxit = 0) # Initial MICE set up
+imp0
+# Changing imputation method from pmm for hgt
+meth = imp0$method
+meth["hgt"] = "norm"
+# Restricting support imputation output
+post = imp0$post
+post["hgt"] <- "imp[[j]][,i] <- squeeze(imp[[j]][,i], c(0.5, 2.8))"
+imp0
 ```
 
 
